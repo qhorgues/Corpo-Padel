@@ -9,6 +9,59 @@ Application de gestion de tournois corporatifs de padel.
 - **Base de données** : SQLite
 - **Tests** : Pytest (backend) + Cypress (frontend)
 
+## 💻 Kit de démarrage fonctionnel
+
+### Backend (FASTAPI)
+backend/
+├── app/
+│   ├── api/
+│   │   ├── auth.py          ✅ Routes d'authentification
+│   │   └── deps.py          ✅ Dépendances (get_current_user)
+│   ├── core/
+│   │   ├── config.py        ✅ Configuration
+│   │   └── security.py      ✅ JWT + hashing
+│   ├── models/
+│   │   └── models.py        ✅ User + LoginAttempt
+│   ├── schemas/
+│   │   └── auth.py          ✅ Schémas Pydantic
+│   ├── database.py          ✅ Configuration SQLAlchemy
+│   └── main.py              ✅ Application FastAPI
+├── tests/
+│   ├── conftest.py          ✅ Fixtures
+│   ├── test_auth.py         ✅ Tests authentification
+│   ├── test_security.py     ✅ Tests sécurité
+│   └── test_validation.py   ✅ Tests validation
+├── .env.example
+├── requirements.txt
+└── README.md
+
+
+### Frontend (VueJS)
+frontend/
+├── src/
+│   ├── components/
+│   │   └── NavBar.vue       ✅ Barre de navigation
+│   ├── router/
+│   │   └── index.js         ✅ Routing avec guards
+│   ├── services/
+│   │   └── api.js           ✅ Client Axios + intercepteurs
+│   ├── stores/
+│   │   └── auth.js          ✅ Store Pinia authentification
+│   ├── views/
+│   │   ├── HomePage.vue     ✅ Page d'accueil
+│   │   └── LoginPage.vue    ✅ Page de connexion
+│   ├── App.vue
+│   └── main.js
+├── cypress/
+│   ├── e2e/
+│   │   ├── auth.cy.js       ✅ Tests E2E auth
+│   │   └── navigation.cy.js ✅ Tests navigation
+│   └── support/
+│       └── commands.js      ✅ Commandes custom
+├── .env.example
+├── package.json
+└── README.md
+
 ## 🚀 Démarrage rapide
 
 ### Backend
