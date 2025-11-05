@@ -70,9 +70,9 @@ frontend/
 ### Backend
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# ou venv\Scripts\activate sur Windows
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# ou .venv\Scripts\activate sur Windows
 pip install -r requirements.txt
 cp .env.example .env
 # Générer une SECRET_KEY : python -c "import secrets; print(secrets.token_urlsafe(32))"
