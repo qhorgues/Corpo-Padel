@@ -26,3 +26,5 @@ pnpm-debug.log*
 .venv
 .env
 venv
+
+backend/padel_corpo.db
