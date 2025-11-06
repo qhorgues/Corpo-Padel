@@ -16,10 +16,12 @@ router = APIRouter()
 MAX_ATTEMPTS = 5
 LOCKOUT_MINUTES = 30
 
+
 def check_and_update_attempts(db: Session, email: str, success: bool = False):
     """Vérifie et met à jour les tentatives de connexion"""
     attempt = db.query(LoginAttempt).filter(LoginAttempt.email == email).first()
-    
+    print(attempts_count)
+
     if not attempt:
         attempt = LoginAttempt(email=email)
         db.add(attempt)
@@ -40,14 +42,14 @@ def check_and_update_attempts(db: Session, email: str, success: bool = False):
     
     if success:
         # Réinitialiser les tentatives en cas de succès
-        attempt.attempts_count = 0
+        attempts_count = 0
         attempt.locked_until = None
     else:
         # Incrémenter les tentatives
-        attempt.attempts_count += 1
+        attempts_count += 1
         attempt.last_attempt = now
         
-        if attempt.attempts_count >= MAX_ATTEMPTS:
+        if attempts_count >= MAX_ATTEMPTS:
             attempt.locked_until = now + timedelta(minutes=LOCKOUT_MINUTES)
             db.commit()
             raise HTTPException(
@@ -62,7 +64,7 @@ def check_and_update_attempts(db: Session, email: str, success: bool = False):
     db.commit()
     
     if not success:
-        attempts_remaining = MAX_ATTEMPTS - attempt.attempts_count
+        attempts_remaining = MAX_ATTEMPTS - attempts_count
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
