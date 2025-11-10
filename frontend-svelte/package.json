@@ -30,6 +30,7 @@
 		"vitest-browser-svelte": "^1.1.0"
 	},
 	"dependencies": {
-		"axios": "^1.13.2"
+		"axios": "^1.13.2",
+		"cypress": "^15.6.0"
 	}
 }
