@@ -31,11 +31,11 @@ def check_and_update_attempts(db: Session, email: str, success: bool = False):
     
     now = datetime.utcnow()
 
-    print(now)
-    print(locked_until)
+    print(attempts_count)
     
     # Vérifier si le compte est bloqué
     if attempts_count >= MAX_ATTEMPTS and locked_until > now:
+        print("bad1")
         minutes_remaining = int((locked_until - now).total_seconds() / 60)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -55,6 +55,7 @@ def check_and_update_attempts(db: Session, email: str, success: bool = False):
         attempts_count += 1
         
         if attempts_count >= MAX_ATTEMPTS:
+            print("bad2")
             locked_until = now + timedelta(minutes=LOCKOUT_MINUTES)
             db.commit()
             raise HTTPException(
@@ -69,6 +70,7 @@ def check_and_update_attempts(db: Session, email: str, success: bool = False):
     db.commit()
     
     if not success:
+        print("good")
         attempts_remaining = MAX_ATTEMPTS - attempts_count
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
