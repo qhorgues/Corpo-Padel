@@ -15,54 +15,56 @@ router = APIRouter()
 
 MAX_ATTEMPTS = 5
 LOCKOUT_MINUTES = 30
-attempts_count = 0
-locked_until = timedelta(0)
 
 def check_and_update_attempts(db: Session, email: str, success: bool = False):
     """Vérifie et met à jour les tentatives de connexion"""
     attempt = db.query(LoginAttempt).filter(LoginAttempt.email == email).first()
-
-    global attempts_count
-    global locked_until
+    
+    print(attempt)
 
     if not attempt:
-        attempt = LoginAttempt(email=email)
+        print("here")
+
+        attempt = LoginAttempt(email = email)
         db.add(attempt)
+
+        print(attempt.id)
+        print(attempt.email)
+        print(attempt.attempts_count)
+        print(attempt.last_attempt)
+        print(attempt.locked_until)
     
     now = datetime.utcnow()
-
-    print(attempts_count)
     
     # Vérifier si le compte est bloqué
-    if attempts_count >= MAX_ATTEMPTS and locked_until > now:
-        print("bad1")
-        minutes_remaining = int((locked_until - now).total_seconds() / 60)
+    if attempt.locked_until and attempt.locked_until > now:
+        minutes_remaining = int((attempt.locked_until - now).total_seconds() / 60)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "message": "Compte bloqué",
-                "locked_until": locked_until.isoformat(),
+                "locked_until": attempt.locked_until.isoformat(),
                 "minutes_remaining": minutes_remaining
             }
         )
     
     if success:
         # Réinitialiser les tentatives en cas de succès
-        attempts_count = 0
-        locked_until = None
+        attempt.attempts_count = 0
+        attempt.locked_until = None
     else:
         # Incrémenter les tentatives
-        attempts_count += 1
+        attempt.attempts_count += 1
+        attempt.last_attempt = now
         
-        if attempts_count >= MAX_ATTEMPTS:
-            print("bad2")
-            locked_until = now + timedelta(minutes=LOCKOUT_MINUTES)
+        if attempt.attempts_count >= MAX_ATTEMPTS:
+            attempt.locked_until = now + timedelta(minutes=LOCKOUT_MINUTES)
             db.commit()
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "message": "Compte bloqué après 5 tentatives échouées",
-                    "locked_until": locked_until.isoformat(),
+                    "locked_until": attempt.locked_until.isoformat(),
                     "minutes_remaining": LOCKOUT_MINUTES
                 }
             )
@@ -70,8 +72,7 @@ def check_and_update_attempts(db: Session, email: str, success: bool = False):
     db.commit()
     
     if not success:
-        print("good")
-        attempts_remaining = MAX_ATTEMPTS - attempts_count
+        attempts_remaining = MAX_ATTEMPTS - attempt.attempts_count
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
