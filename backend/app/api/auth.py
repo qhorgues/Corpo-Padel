@@ -15,27 +15,33 @@ router = APIRouter()
 
 MAX_ATTEMPTS = 5
 LOCKOUT_MINUTES = 30
-
+attempts_count = 0
+locked_until = timedelta(0)
 
 def check_and_update_attempts(db: Session, email: str, success: bool = False):
     """Vérifie et met à jour les tentatives de connexion"""
     attempt = db.query(LoginAttempt).filter(LoginAttempt.email == email).first()
-    print(attempts_count)
+
+    global attempts_count
+    global locked_until
 
     if not attempt:
         attempt = LoginAttempt(email=email)
         db.add(attempt)
     
     now = datetime.utcnow()
+
+    print(now)
+    print(locked_until)
     
     # Vérifier si le compte est bloqué
-    if attempt.locked_until and attempt.locked_until > now:
-        minutes_remaining = int((attempt.locked_until - now).total_seconds() / 60)
+    if attempts_count >= MAX_ATTEMPTS and locked_until > now:
+        minutes_remaining = int((locked_until - now).total_seconds() / 60)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "message": "Compte bloqué",
-                "locked_until": attempt.locked_until.isoformat(),
+                "locked_until": locked_until.isoformat(),
                 "minutes_remaining": minutes_remaining
             }
         )
@@ -43,20 +49,19 @@ def check_and_update_attempts(db: Session, email: str, success: bool = False):
     if success:
         # Réinitialiser les tentatives en cas de succès
         attempts_count = 0
-        attempt.locked_until = None
+        locked_until = None
     else:
         # Incrémenter les tentatives
         attempts_count += 1
-        attempt.last_attempt = now
         
         if attempts_count >= MAX_ATTEMPTS:
-            attempt.locked_until = now + timedelta(minutes=LOCKOUT_MINUTES)
+            locked_until = now + timedelta(minutes=LOCKOUT_MINUTES)
             db.commit()
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "message": "Compte bloqué après 5 tentatives échouées",
-                    "locked_until": attempt.locked_until.isoformat(),
+                    "locked_until": locked_until.isoformat(),
                     "minutes_remaining": LOCKOUT_MINUTES
                 }
             )
