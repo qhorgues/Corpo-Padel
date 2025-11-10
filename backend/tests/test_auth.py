@@ -41,21 +41,24 @@ def test_login_invalid_password(client, test_user):
     data = response.json()
     assert "attempts_remaining" in data["detail"]
 
-def test_brute_force_protection(client, test_user):
+def test_brute_force_protection(client_block, test_user):
     """Test blocage après 5 tentatives échouées"""
     # Faire 5 tentatives échouées
     for i in range(5):
-        response = client.post("/api/v1/auth/login", json={
+        response = client_block.post("/api/v1/auth/login", json={
             "email": "test@example.com",
             "password": "WrongPassword"
         })
         if i < 4:
+            print(response.status_code)
+            print(i)
+            print("----------")
             assert response.status_code == status.HTTP_401_UNAUTHORIZED
         else:
             assert response.status_code == status.HTTP_403_FORBIDDEN
     
     # La 6ème tentative doit être bloquée même avec le bon mot de passe
-    response = client.post("/api/v1/auth/login", json={
+    response = client_block.post("/api/v1/auth/login", json={
         "email": "test@example.com",
         "password": "ValidP@ssw0rd123"
     })

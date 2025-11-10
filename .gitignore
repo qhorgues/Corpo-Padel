@@ -28,3 +28,5 @@ pnpm-debug.log*
 venv
 
 backend/padel_corpo.db
+backend/.coverage
+backend/test.db
