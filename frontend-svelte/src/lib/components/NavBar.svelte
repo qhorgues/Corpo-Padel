@@ -20,18 +20,18 @@
 
             <!-- Menu principal -->
             <div class="hidden md:flex space-x-4">
-                <a href="/" class="px-3 py-2 rounded hover:bg-blue-700"
-                    >Accueil</a
-                >
-                <a href="/planning" class="px-3 py-2 rounded hover:bg-blue-700"
-                    >Planning</a
-                >
-                <a href="/matches" class="px-3 py-2 rounded hover:bg-blue-700"
-                    >Matchs</a
-                >
-                <a href="/results" class="px-3 py-2 rounded hover:bg-blue-700"
-                    >Résultats</a
-                >
+                <a href="/" class="px-3 py-2 rounded hover:bg-blue-700">
+                    Accueil
+                </a>
+                <a href="/planning" class="px-3 py-2 rounded hover:bg-blue-700">
+                    Planning
+                </a>
+                <a href="/matches" class="px-3 py-2 rounded hover:bg-blue-700">
+                    Matchs
+                </a>
+                <a href="/results" class="px-3 py-2 rounded hover:bg-blue-700">
+                    Résultats
+                </a>
 
                 {#if $authStore.isAdmin}
                     <a
