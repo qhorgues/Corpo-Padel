@@ -2,6 +2,7 @@
 # FICHIER : backend/app/schemas/auth.py
 # ============================================
 
+from app.models.models import User
 from pydantic import BaseModel, EmailStr, Field, field_validator
 import re
 
@@ -19,7 +20,7 @@ class UserResponse(BaseModel):
     role: str
     must_change_password: bool
     
-    class Config:
+    class ConfigDict:
         from_attributes = True
 
 class TokenResponse(BaseModel):

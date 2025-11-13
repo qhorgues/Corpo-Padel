@@ -101,11 +101,10 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
         }
     )
     
-    UserResponse.model_config['from_attributes']=True
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse.model_validate(user)
+        user=UserResponse.model_validate(obj=user)
     )
 
 @router.post("/change-password")
