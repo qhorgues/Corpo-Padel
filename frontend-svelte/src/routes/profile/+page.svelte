@@ -4,7 +4,7 @@ FICHIER : src/routes/HomePage.svelte
 
 <script>
     import { authStore } from "$lib/store/auth.js";
-    import Match from "$lib/components/profile.svelte"; 
+    import profile from "$lib/data/profile_test.json"; 
     // authStore est supposé être un store Svelte (writable/derived)
     // Exemple : export const authStore = writable({ isAuthenticated: false, user: null, isAdmin: false });
 </script>
