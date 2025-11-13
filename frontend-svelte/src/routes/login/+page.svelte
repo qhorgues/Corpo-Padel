@@ -3,6 +3,7 @@
     import { authStore } from "$lib/store/auth";
     import { goto } from "$app/navigation";
     import { writable } from "svelte/store";
+    import { get } from "svelte/store";
 
     const email = writable("");
     const password = writable("");
@@ -17,15 +18,11 @@
         attemptsRemaining.set(null);
         minutesRemaining.set(null);
 
-        try {
-            // On utilise directement le store pour se connecter
-            await authStore.login($email, $password);
-            // Redirection après succès
+        try {            await authStore.login(get(email), get(password));
             goto("/");
         } catch (err: any) {
             console.error(err);
             errorMessage.set(err?.message || "Erreur de connexion");
-            // Exemple : tu peux adapter si ton API renvoie ces infos
             attemptsRemaining.set(err?.attemptsRemaining ?? null);
             minutesRemaining.set(err?.minutesRemaining ?? null);
         } finally {
