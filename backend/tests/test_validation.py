@@ -83,3 +83,14 @@ def test_password_validation_success():
     assert request.current_password == "OldP@ssw0rd123!"
     assert request.new_password == "NewP@ssw0rd123!"
     assert request.confirm_password == "NewP@ssw0rd123!"
+
+def test_password_reject_space():
+    """Test rejet avec espace"""
+    with pytest.raises(ValidationError) as exc_info:
+        ChangePasswordRequest(
+            current_password="Old P@ssw0rd 123!",
+            new_password="New P@ssw0rd 123!",
+            confirm_password="New P@ssw0rd 123!"
+        )
+    
+    assert "pas contenir des espaces" in str(exc_info.value)

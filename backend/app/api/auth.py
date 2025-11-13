@@ -19,20 +19,11 @@ LOCKOUT_MINUTES = 30
 def check_and_update_attempts(db: Session, email: str, success: bool = False):
     """Vérifie et met à jour les tentatives de connexion"""
     attempt = db.query(LoginAttempt).filter(LoginAttempt.email == email).first()
-    
-    print(attempt)
 
     if not attempt:
-        print("here")
-
         attempt = LoginAttempt(email = email)
         db.add(attempt)
-
-        print(attempt.id)
-        print(attempt.email)
-        print(attempt.attempts_count)
-        print(attempt.last_attempt)
-        print(attempt.locked_until)
+        db.commit()
     
     now = datetime.utcnow()
     
@@ -110,10 +101,11 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
         }
     )
     
+    UserResponse.model_config['from_attributes']=True
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse.from_orm(user)
+        user=UserResponse.model_validate(user)
     )
 
 @router.post("/change-password")

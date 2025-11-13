@@ -12,7 +12,7 @@ from app.models.models import User
 from app.core.security import get_password_hash
 
 # Base de données de test en mémoire
-SQLALCHEMY_DATABASE_URL = "sqlite:///./padel_corpo.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

@@ -2,7 +2,7 @@
 # FICHIER : backend/app/schemas/auth.py
 # ============================================
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 import re
 
 class LoginRequest(BaseModel):
@@ -29,11 +29,12 @@ class TokenResponse(BaseModel):
 
 class ChangePasswordRequest(BaseModel):
     current_password: str
-    new_password: str = Field(..., min_length=12)
+    new_password: str = Field(...)
     confirm_password: str
     
-    @validator('new_password')
+    @field_validator('new_password')
     def validate_password(cls, v):
+        print(v)
         if len(v) < 12:
             raise ValueError('Le mot de passe doit contenir au moins 12 caractères')
         if not re.search(r'[A-Z]', v):
@@ -44,10 +45,12 @@ class ChangePasswordRequest(BaseModel):
             raise ValueError('Le mot de passe doit contenir au moins un chiffre')
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
             raise ValueError('Le mot de passe doit contenir au moins un caractère spécial')
+        if re.search(r'[ ]', v):
+            raise ValueError('Le mot de passe ne doit pas contenir des espaces')
         return v
     
-    @validator('confirm_password')
+    @field_validator('confirm_password')
     def passwords_match(cls, v, values):
-        if 'new_password' in values and v != values['new_password']:
+        if 'new_password' in values.data and v != values.data['new_password']:
             raise ValueError('Les mots de passe ne correspondent pas')
         return v
