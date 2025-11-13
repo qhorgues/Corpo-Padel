@@ -32,13 +32,13 @@ FICHIER : src/routes/HomePage.svelte
             </div>
         {:else}
 
-        <div class="matchs">
-            <Match />
-            <Match />
-            <Match />
-            <Match />
-            <Match />
-            <Match />
+        <div class="Match">     
+                <Match />
+                <Match />
+                <Match />
+                <Match />
+                <Match />
+                <Match />
         </div>
 
 
