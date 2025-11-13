@@ -1,12 +1,7 @@
 {
   "nom": "Dupont",
   "prenom": "Amandine",
-  "photo_profil": {
-    "filename": "amandine_dupont_profile.jpg",
-    "format": "JPG",
-    "size_bytes": 1245780,
-    "size_human": "1.19 MB"
-  },
+  "filename": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDF5XsLZjD60SsGNTcNquq9VNn59Vi5mXooFRNJcTvk0HtVEE38ovxcwbM2gV8I07Pxd-uYo-2oPRhilXoywtu0vd33vtap9krlwgIitk&s=10",
   "date_naissance": "1992-07-18",
   "email": "amandine.dupont1984@example.com",
   "numero_licence": "LIC-2025-00019876"

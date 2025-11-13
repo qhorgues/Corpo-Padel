@@ -34,14 +34,13 @@ FICHIER : src/routes/HomePage.svelte
 
       
 <h1>Profil utilisateur</h1>
-<img src={`/images/${profile.photo_profil.filename}`} alt="Photo de {profile.prenom} {profile.nom}" width="150" />
+<img src={`${profile.filename}`} alt="Photo de {profile.prenom} {profile.nom}" width="150" />
 
 <p><strong>Nom :</strong> {profile.nom}</p>
 <p><strong>Prénom :</strong> {profile.prenom}</p>
 <p><strong>Date de naissance :</strong> {profile.date_naissance}</p>
 <p><strong>Email :</strong> {profile.email}</p>
 <p><strong>Numéro de licence :</strong> {profile.numero_licence}</p>
-<p><strong>Taille de la photo :</strong> {profile.photo_profil.size_human}</p>
 
 
         {/if}
