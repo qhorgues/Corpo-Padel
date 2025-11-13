@@ -4,7 +4,7 @@ FICHIER : src/routes/HomePage.svelte
 
 <script>
     import { authStore } from "$lib/store/auth.js";
-    import match from "$lib/components/match.svelte";
+    import Match from "$lib/components/match.svelte";
     // authStore est supposé être un store Svelte (writable/derived)
     // Exemple : export const authStore = writable({ isAuthenticated: false, user: null, isAdmin: false });
 </script>
@@ -33,12 +33,12 @@ FICHIER : src/routes/HomePage.svelte
         {:else}
 
         <div class="matchs">
-            <match />
-            <match />
-            <match />
-            <match />
-            <match />
-            <match />
+            <Match />
+            <Match />
+            <Match />
+            <Match />
+            <Match />
+            <Match />
         </div>
 
 
