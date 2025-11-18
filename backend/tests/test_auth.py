@@ -5,8 +5,8 @@
 import pytest
 from fastapi import status
 
-def test_login_success(client, test_user):
-    """Test connexion avec credentials valides"""
+def test_login_success_user(client, test_user):
+    """Test connexion avec credentials valides pour un utilisateur"""
     response = client.post("/api/v1/auth/login", json={
         "email": "test@example.com",
         "password": "ValidP@ssw0rd123"
@@ -18,6 +18,20 @@ def test_login_success(client, test_user):
     assert data["token_type"] == "bearer"
     assert data["user"]["email"] == "test@example.com"
     assert data["user"]["role"] == "JOUEUR"
+
+def test_login_success_admin(client, test_admin):
+    """Test connexion avec credentials valides pour un admin"""
+    response = client.post("/api/v1/auth/login", json={
+        "email": "admin@example.com",
+        "password": "AdminP@ssw0rd123"
+    })
+    
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
+    assert data["user"]["email"] == "admin@example.com"
+    assert data["user"]["role"] == "ADMINISTRATEUR"
 
 def test_login_invalid_email(client, test_user):
     """Test connexion avec email invalide"""

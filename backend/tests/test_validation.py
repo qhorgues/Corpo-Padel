@@ -17,6 +17,17 @@ def test_password_validation_too_short():
     
     assert "au moins 12 caractères" in str(exc_info.value)
 
+def test_password_validation_too_long():
+    """Test validation mot de passe trop long"""
+    with pytest.raises(ValidationError) as exc_info:
+        ChangePasswordRequest(
+            current_password="OldP@sswordThatIReallyLikedBTWHaveIToldYouMyFavoriteNumbersTheyre123!IknowItsSoCoolToBeAbleToTypeSoMuchForMyOldPasswordWohoo",
+            new_password="NewP@sswordThatIReallyLikedBTWHaveIToldYouMyFavoriteNumbersTheyre123!IknowItsSoCoolToBeAbleToTypeSoMuchForMyNewPasswordWohoo",
+            confirm_password="NewP@sswordThatIReallyLikedBTWHaveIToldYouMyFavoriteNumbersTheyre123!IknowItsSoCoolToBeAbleToTypeSoMuchForMyNewPasswordWohoo"
+        )
+    
+    assert "au moins 12 caractères" in str(exc_info.value)
+
 def test_password_validation_no_uppercase():
     """Test validation sans majuscule"""
     with pytest.raises(ValidationError) as exc_info:
@@ -84,8 +95,8 @@ def test_password_validation_success():
     assert request.new_password == "NewP@ssw0rd123!"
     assert request.confirm_password == "NewP@ssw0rd123!"
 
-def test_password_reject_space():
-    """Test rejet avec espace"""
+def test_password_validation_space():
+    """Test validation avec espace"""
     with pytest.raises(ValidationError) as exc_info:
         ChangePasswordRequest(
             current_password="Old P@ssw0rd 123!",

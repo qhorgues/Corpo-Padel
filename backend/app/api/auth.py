@@ -78,12 +78,15 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     
     # Récupérer l'utilisateur
     user = db.query(User).filter(User.email == credentials.email).first()
+    print(user)
     
     # Vérifier les credentials
     if not user or not verify_password(credentials.password, user.password_hash):
+        print("here1")
         check_and_update_attempts(db, credentials.email, success=False)
     
     if not user.is_active:
+        print("here1")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Compte désactivé"

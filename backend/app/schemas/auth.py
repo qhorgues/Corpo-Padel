@@ -20,7 +20,8 @@ class UserResponse(BaseModel):
     role: str
     must_change_password: bool
     
-    class ConfigDict:
+    #TODO change to ConfigDict, Config is deprecated
+    class Config:
         from_attributes = True
 
 class TokenResponse(BaseModel):
@@ -37,6 +38,8 @@ class ChangePasswordRequest(BaseModel):
     def validate_password(cls, v):
         print(v)
         if len(v) < 12:
+            raise ValueError('Le mot de passe doit contenir au moins 12 caractères')
+        if len(v) > 60:
             raise ValueError('Le mot de passe doit contenir au moins 12 caractères')
         if not re.search(r'[A-Z]', v):
             raise ValueError('Le mot de passe doit contenir au moins une majuscule')
