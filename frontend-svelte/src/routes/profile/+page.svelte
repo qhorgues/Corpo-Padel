@@ -3,6 +3,7 @@
     import { authStore } from "$lib/store/auth.js";
     import profile from "$lib/data/profile_test.json"; 
     import Page from "../+page.svelte";
+    import { goto } from '$app/navigation';
 </script>
 
 <div
@@ -38,9 +39,11 @@
     <p><strong>Date de naissance :</strong> {profile.date_naissance}</p>
     <p><strong>Email :</strong> {profile.email}</p>
     <p><strong>Numéro de licence :</strong> {profile.numero_licence}</p>
-    <button class="mt-4 ml-4 p-2 w-44 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md">
-      Éditer les informations
-    </button></span>
+    <button 
+    on:click={() => goto('/profile/edit')}
+    class="mt-4 ml-4 p-2 w-44 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md">
+    Éditer les informations
+    </button>
     <span class="flex gap-2 font-medium text-gray-600 dark:text-gray-400">
     </span>
   </div>
