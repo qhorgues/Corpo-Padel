@@ -14,9 +14,6 @@ FICHIER : src/routes/HomePage.svelte
 >
     <div class="max-w-4xl mx-auto p-8 text-center">
   
-
-
-        <!-- Contenu conditionnel -->
         {#if !$authStore.isAuthenticated}
             <div class="space-y-4">
                 <p class="text-gray-700">
@@ -33,14 +30,22 @@ FICHIER : src/routes/HomePage.svelte
         {:else}
 
       
-<h1>Profil utilisateur</h1>
-<img src={`${profile.filename}`} alt="Photo de {profile.prenom} {profile.nom}" width="150" />
+<span class="flex gap-2 font-medium text-gray-600 dark:text-gray-400"><h1>Profil utilisateur</h1></span>
+<div class="flex flex-col items-center gap-6 p-7 rounded-2xl">
+  <div>
+    <img class="size-48 shadow-xl rounded-md" alt="" src={`${profile.filename}`} />
+  </div>
+  <div class="flex items-center">
+    <span class="text-2xl font-medium"><p><strong>Nom :</strong> {profile.nom}</p>
+    <p><strong>Prénom :</strong> {profile.prenom}</p>
+    <p><strong>Date de naissance :</strong> {profile.date_naissance}</p>
+    <p><strong>Email :</strong> {profile.email}</p>
+    <p><strong>Numéro de licence :</strong> {profile.numero_licence}</p></span>
+    <span class="flex gap-2 font-medium text-gray-600 dark:text-gray-400">
+    </span>
+  </div>
+</div>
 
-<p><strong>Nom :</strong> {profile.nom}</p>
-<p><strong>Prénom :</strong> {profile.prenom}</p>
-<p><strong>Date de naissance :</strong> {profile.date_naissance}</p>
-<p><strong>Email :</strong> {profile.email}</p>
-<p><strong>Numéro de licence :</strong> {profile.numero_licence}</p>
 
 
         {/if}
