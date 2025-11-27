@@ -25,6 +25,7 @@ FICHIER : src/routes/HomePage.svelte
         </div>
     </div>
 {:else}
+    {#if $authStore.isAdmin}
     <div class="h-screen w-screen bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden">
         <div class="h-full bg-white shadow-xl overflow-auto">
             <h2 class="text-2xl font-bold text-gray-800 p-6 bg-gray-50 border-b sticky top-0">Liste des joueurs</h2>
@@ -50,4 +51,23 @@ FICHIER : src/routes/HomePage.svelte
             {/each}
         </div>
     </div>
+    {:else}
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div class="max-w-4xl mx-auto p-8 text-center">
+            <div class="space-y-4">
+                <h2 class="text-3xl font-bold text-red-600">VOUS N'ÊTES PAS ADMIN</h2>
+                <p class="text-gray-700">
+                    Vous n'avez pas les autorisations nécessaires pour accéder à cette page.
+                </p>
+                <a
+                    href="/"
+                    class="inline-block px-8 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-lg"
+                >
+                    Retour à l'accueil
+                </a>
+            </div>
+        </div>
+    </div>
+    {/if}
+    
 {/if}
