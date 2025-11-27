@@ -24,6 +24,12 @@ class UserResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class UserCreationRequest(BaseModel):
+    email: str
+    password: str
+    role: str
+    is_active: bool
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str
@@ -36,18 +42,17 @@ class ChangePasswordRequest(BaseModel):
     
     @field_validator('new_password')
     def validate_password(cls, v):
-        print(v)
         if len(v) < 12:
             raise ValueError('Le mot de passe doit contenir au moins 12 caractères')
         if len(v) > 60:
-            raise ValueError('Le mot de passe doit contenir au moins 12 caractères')
+            raise ValueError('Le mot de passe doit contenir au plus 60 caractères')
         if not re.search(r'[A-Z]', v):
             raise ValueError('Le mot de passe doit contenir au moins une majuscule')
         if not re.search(r'[a-z]', v):
             raise ValueError('Le mot de passe doit contenir au moins une minuscule')
         if not re.search(r'\d', v):
             raise ValueError('Le mot de passe doit contenir au moins un chiffre')
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
+        if not re.search(r'[!@#$%^&*(),;.?":{}|<>]', v):
             raise ValueError('Le mot de passe doit contenir au moins un caractère spécial')
         if re.search(r'[ ]', v):
             raise ValueError('Le mot de passe ne doit pas contenir des espaces')

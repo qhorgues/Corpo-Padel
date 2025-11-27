@@ -5,6 +5,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
+from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.database import Base, get_db
@@ -53,6 +54,12 @@ def client(db_session):
 def test_user(db_session):
     """Crée un utilisateur de test"""
     user = User(
+        last_name="Test",
+        first_name="Test",
+        company="Test",
+        license_number="Test",
+        birth_date=func.now(),
+        photo_url="Test",
         email="test@example.com",
         password_hash=get_password_hash("ValidP@ssw0rd123"),
         role="JOUEUR",
@@ -67,6 +74,12 @@ def test_user(db_session):
 def test_admin(db_session):
     """Crée un administrateur de test"""
     admin = User(
+        last_name="Test",
+        first_name="Test",
+        company="Test",
+        license_number="Test",
+        birth_date=func.now(),
+        photo_url="Test",
         email="admin@example.com",
         password_hash=get_password_hash("AdminP@ssw0rd123"),
         role="ADMINISTRATEUR",

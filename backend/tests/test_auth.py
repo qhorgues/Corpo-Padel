@@ -82,6 +82,69 @@ def test_brute_force_protection(client, test_user):
     assert "locked_until" in data["detail"]
     assert "minutes_remaining" in data["detail"]
 
+def test_change_password(client, test_user):
+    """Test de changement de mot de passe"""
+    login_response = client.post("/api/v1/auth/login", json={
+        "email": "test@example.com",
+        "password": "ValidP@ssw0rd123"
+    })
+    token = login_response.json()["access_token"]
+    
+    # Utiliser le token pour accéder à une route protégée
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = client.post("/api/v1/auth/change-password", headers=headers, json={
+        "current_password": "ValidP@ssw0rd123",
+        "new_password": "NewP@ssw0rd123!",
+        "confirm_password": "NewP@ssw0rd123!"
+    })
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert "succès" in data["message"]
+
+def test_change_password_invalid_password(client, test_user):
+    """Test de changement de mot de passe avec mot de passe incorrecte"""
+    login_response = client.post("/api/v1/auth/login", json={
+        "email": "test@example.com",
+        "password": "ValidP@ssw0rd123"
+    })
+    token = login_response.json()["access_token"]
+    
+    # Utiliser le token pour accéder à une route protégée
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = client.post("/api/v1/auth/change-password", headers=headers, json={
+        "current_password": "WrongPassword",
+        "new_password": "NewP@ssw0rd123!",
+        "confirm_password": "NewP@ssw0rd123!"
+    })
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    data = response.json()
+    assert "actuel incorrect" in data["detail"]
+
+def test_change_password_same_password(client, test_user):
+    """Test de changement de mot de passe avec nouveau mot de passe identique"""
+    login_response = client.post("/api/v1/auth/login", json={
+        "email": "test@example.com",
+        "password": "ValidP@ssw0rd123"
+    })
+    token = login_response.json()["access_token"]
+    
+    # Utiliser le token pour accéder à une route protégée
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = client.post("/api/v1/auth/change-password", headers=headers, json={
+        "current_password": "ValidP@ssw0rd123",
+        "new_password": "ValidP@ssw0rd123",
+        "confirm_password": "ValidP@ssw0rd123"
+    })
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    data = response.json()
+    assert "différent de l'ancien" in data["detail"]
+
 def test_login_inactive_user(client, db_session, test_user):
     """Test connexion avec compte désactivé"""
     test_user.is_active = False

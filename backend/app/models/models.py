@@ -10,6 +10,12 @@ class User(Base):
     __tablename__ = "users"
     
     id = Column(Integer, primary_key=True, index=True)
+    last_name = Column(String, nullable=False)
+    first_name = Column(String, nullable=False)
+    company = Column(String, nullable=False)
+    license_number = Column(String, nullable=False)
+    birth_date = Column(DateTime(timezone=True), nullable=False)
+    photo_url = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     role = Column(String, nullable=False)  # JOUEUR ou ADMINISTRATEUR

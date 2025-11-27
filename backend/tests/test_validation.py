@@ -26,7 +26,7 @@ def test_password_validation_too_long():
             confirm_password="NewP@sswordThatIReallyLikedBTWHaveIToldYouMyFavoriteNumbersTheyre123!IknowItsSoCoolToBeAbleToTypeSoMuchForMyNewPasswordWohoo"
         )
     
-    assert "au moins 12 caractères" in str(exc_info.value)
+    assert "au plus 60 caractères" in str(exc_info.value)
 
 def test_password_validation_no_uppercase():
     """Test validation sans majuscule"""
