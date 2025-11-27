@@ -1,0 +1,76 @@
+{
+  "results": [
+    {
+      "match_id": 1,
+      "date": "2024-11-15",
+      "opponents": {
+        "company": "InnoSoft",
+        "players": ["Sophie Martin"]
+      },
+      "score": "6-4, 6-3",
+      "result": "VICTOIRE",
+      "court_number": 3
+    },
+    {
+      "match_id": 2,
+      "date": "2024-11-08",
+      "opponents": {
+        "company": "DataPlus",
+        "players": ["Claire Dubois"]
+      },
+      "score": "3-6, 6-4, 5-7",
+      "result": "DEFAITE",
+      "court_number": 1
+    },
+    {
+      "match_id": 3,
+      "date": "2024-11-01",
+      "opponents": {
+        "company": "CloudTech",
+        "players": ["Marie Lefevre"]
+      },
+      "score": "6-2, 6-1",
+      "result": "VICTOIRE",
+      "court_number": 2
+    },
+    {
+      "match_id": 4,
+      "date": "2024-10-25",
+      "opponents": {
+        "company": "WebServices",
+        "players": ["Laura Bernard"]
+      },
+      "score": "7-6, 4-6, 7-5",
+      "result": "VICTOIRE",
+      "court_number": 4
+    },
+    {
+      "match_id": 5,
+      "date": "2024-10-18",
+      "opponents": {
+        "company": "MediaCorp",
+        "players": ["Julie Rousseau"]
+      },
+      "score": "2-6, 3-6",
+      "result": "DEFAITE",
+      "court_number": 1
+    },
+    {
+      "match_id": 6,
+      "date": "2024-10-11",
+      "opponents": {
+        "company": "FinanceHub",
+        "players": ["Emma Petit"]
+      },
+      "score": "6-3, 3-6, 6-4",
+      "result": "VICTOIRE",
+      "court_number": 3
+    }
+  ],
+  "statistics": {
+    "total_matches": 6,
+    "wins": 4,
+    "losses": 2,
+    "win_rate": 66.7
+  }
+}
