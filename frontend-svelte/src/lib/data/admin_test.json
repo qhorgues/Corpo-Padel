@@ -1,0 +1,25 @@
+{
+  "joueurs": [
+    {
+      "nom": "Martin",
+      "prenom": "Luc",
+      "entreprise": "TechVision",
+      "numero_licence": "L123456",
+      "email": "luc.martin@techvision.com"
+    },
+    {
+      "nom": "Dupont",
+      "prenom": "Sarah",
+      "entreprise": "GreenPulse",
+      "numero_licence": "L654321",
+      "email": "sarah.dupont@greenpulse.fr"
+    },
+    {
+      "nom": "Bernard",
+      "prenom": "Alexandre",
+      "entreprise": "NovaSystems",
+      "numero_licence": "L987654",
+      "email": "alexandre.bernard@novasystems.eu"
+    }
+  ]
+}
