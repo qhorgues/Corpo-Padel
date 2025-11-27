@@ -10,14 +10,78 @@ FICHIER : src/routes/HomePage.svelte
     let currentUser = null;
     let isEditMode = false;
     
+    // Validation states
+    let validation = {
+        first_name: { valid: false, error: "" },
+        last_name: { valid: false, error: "" },
+        company: { valid: false, error: "" },
+        license_number: { valid: false, error: "" },
+        email: { valid: false, error: "" }
+    };
+    
+    // Regex patterns
+    const patterns = {
+        first_name: /^[a-zA-ZÀ-ÿ\s]{2,50}$/,
+        last_name: /^[a-zA-ZÀ-ÿ\s]{2,50}$/,
+        company: /^.{2,100}$/,
+        license_number: /^.+$/,
+        email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    };
+    
+    function validateField(field, value) {
+        if (!value || value.trim() === "") {
+            validation[field] = { valid: false, error: "Ce champ est obligatoire" };
+            return;
+        }
+        
+        const isValid = patterns[field].test(value);
+        
+        if (field === "first_name" || field === "last_name") {
+            if (!isValid) {
+                validation[field] = { valid: false, error: "Caractère non autorisé" };
+            } else {
+                validation[field] = { valid: true, error: "" };
+            }
+        } else {
+            validation[field] = { valid: isValid, error: isValid ? "" : "Format invalide" };
+        }
+    }
+    
+    function handleInput(field, event) {
+        let value = event.target.value;
+        
+        // Block input at max length
+        if (field === "first_name" || field === "last_name") {
+            if (value.length > 50) {
+                value = value.substring(0, 50);
+                event.target.value = value;
+            }
+        } else if (field === "company") {
+            if (value.length > 100) {
+                value = value.substring(0, 100);
+                event.target.value = value;
+            }
+        }
+        
+        currentUser[field] = value;
+        validateField(field, value);
+    }
+    
     function openCreateModal() {
         isEditMode = false;
         currentUser = {
-            nom: "",
-            prenom: "",
-            entreprise: "",
-            numero_licence: "",
+            first_name: "",
+            last_name: "",
+            company: "",
+            license_number: "",
             email: ""
+        };
+        validation = {
+            first_name: { valid: false, error: "" },
+            last_name: { valid: false, error: "" },
+            company: { valid: false, error: "" },
+            license_number: { valid: false, error: "" },
+            email: { valid: false, error: "" }
         };
         showModal = true;
     }
@@ -25,6 +89,14 @@ FICHIER : src/routes/HomePage.svelte
     function openEditModal(joueur) {
         isEditMode = true;
         currentUser = { ...joueur };
+        
+        // Validate all fields on edit
+        Object.keys(currentUser).forEach(field => {
+            if (patterns[field]) {
+                validateField(field, currentUser[field]);
+            }
+        });
+        
         showModal = true;
     }
     
@@ -34,7 +106,13 @@ FICHIER : src/routes/HomePage.svelte
     }
     
     function saveUser() {
-        // Logique de sauvegarde à implémenter
+        // Check all fields are valid
+        const allValid = Object.values(validation).every(v => v.valid);
+        if (!allValid) {
+            alert("Veuillez corriger les erreurs avant de sauvegarder");
+            return;
+        }
+        
         console.log(isEditMode ? "Modification" : "Création", currentUser);
         closeModal();
     }
@@ -73,21 +151,21 @@ FICHIER : src/routes/HomePage.svelte
             
             <!-- En-têtes -->
             <div class="grid grid-cols-[1fr_1fr_1.5fr_1fr_2fr_auto] gap-6 px-8 py-3 bg-gray-100 border-b font-semibold text-gray-700 text-sm sticky top-[73px]">
-                <div>Nom</div>
                 <div>Prénom</div>
+                <div>Nom</div>
                 <div>Entreprise</div>
                 <div>Licence</div>
                 <div>Email</div>
-                
+                <div>Actions</div>
             </div>
             
             <!-- Lignes de données -->
             {#each admin.joueurs as joueur, index}
                 <div class="grid grid-cols-[1fr_1fr_1.5fr_1fr_2fr_auto] gap-6 px-8 py-4 border-b hover:bg-blue-50 transition-colors {index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
-                    <div class="text-gray-900">{joueur.nom}</div>
-                    <div class="text-gray-900">{joueur.prenom}</div>
-                    <div class="text-gray-600">{joueur.entreprise}</div>
-                    <div class="text-gray-600">{joueur.numero_licence}</div>
+                    <div class="text-gray-900">{joueur.first_name}</div>
+                    <div class="text-gray-900">{joueur.last_name}</div>
+                    <div class="text-gray-600">{joueur.company}</div>
+                    <div class="text-gray-600">{joueur.license_number}</div>
                     <div class="text-blue-600 text-sm">{joueur.email}</div>
                     <div>
                         <button 
@@ -113,54 +191,115 @@ FICHIER : src/routes/HomePage.svelte
             <form on:submit|preventDefault={saveUser} class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+                        <p class="text-xs text-gray-500 mb-2">2-50 caractères, lettres et espaces uniquement</p>
                         <input 
                             type="text" 
-                            bind:value={currentUser.nom}
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            value={currentUser.first_name}
+                            on:input={(e) => handleInput('first_name', e)}
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {validation.first_name.valid ? 'border-green-500' : validation.first_name.error ? 'border-red-500' : 'border-gray-300'}"
                             required
                         />
+                        {#if validation.first_name.error}
+                            <p class="text-xs text-red-500 mt-1">{validation.first_name.error}</p>
+                        {:else if validation.first_name.valid}
+                            <p class="text-xs text-green-500 mt-1">✓ Valide</p>
+                        {/if}
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Prénom</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                        <p class="text-xs text-gray-500 mb-2">2-50 caractères, lettres et espaces uniquement</p>
                         <input 
                             type="text" 
-                            bind:value={currentUser.prenom}
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            value={currentUser.last_name}
+                            on:input={(e) => handleInput('last_name', e)}
+                            class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {validation.last_name.valid ? 'border-green-500' : validation.last_name.error ? 'border-red-500' : 'border-gray-300'}"
                             required
                         />
+                        {#if validation.last_name.error}
+                            <p class="text-xs text-red-500 mt-1">{validation.last_name.error}</p>
+                        {:else if validation.last_name.valid}
+                            <p class="text-xs text-green-500 mt-1">✓ Valide</p>
+                        {/if}
                     </div>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Entreprise</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Entreprise</label>
+                    <p class="text-xs text-gray-500 mb-2">2-100 caractères</p>
                     <input 
                         type="text" 
-                        bind:value={currentUser.entreprise}
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        value={currentUser.company}
+                        on:input={(e) => handleInput('company', e)}
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {validation.company.valid ? 'border-green-500' : validation.company.error ? 'border-red-500' : 'border-gray-300'}"
                         required
                     />
+                    {#if validation.company.error}
+                        <p class="text-xs text-red-500 mt-1">{validation.company.error}</p>
+                    {:else if validation.company.valid}
+                        <p class="text-xs text-green-500 mt-1">✓ Valide</p>
+                    {/if}
+                </div>
+                
+                {#if !isEditMode}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Numéro de licence</label>
+                    <p class="text-xs text-gray-500 mb-2">Champ obligatoire</p>
+                    <input 
+                        type="text" 
+                        value={currentUser.license_number}
+                        on:input={(e) => handleInput('license_number', e)}
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {validation.license_number.valid ? 'border-green-500' : validation.license_number.error ? 'border-red-500' : 'border-gray-300'}"
+                        required
+                    />
+                    {#if validation.license_number.error}
+                        <p class="text-xs text-red-500 mt-1">{validation.license_number.error}</p>
+                    {:else if validation.license_number.valid}
+                        <p class="text-xs text-green-500 mt-1">✓ Valide</p>
+                    {/if}
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Numéro de licence</label>
-                    <input 
-                        type="text" 
-                        bind:value={currentUser.numero_licence}
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        required
-                    />
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <p class="text-xs text-gray-500 mb-2">Format: exemple@domaine.com</p>
                     <input 
                         type="email" 
-                        bind:value={currentUser.email}
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        value={currentUser.email}
+                        on:input={(e) => handleInput('email', e)}
+                        class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {validation.email.valid ? 'border-green-500' : validation.email.error ? 'border-red-500' : 'border-gray-300'}"
                         required
                     />
+                    {#if validation.email.error}
+                        <p class="text-xs text-red-500 mt-1">{validation.email.error}</p>
+                    {:else if validation.email.valid}
+                        <p class="text-xs text-green-500 mt-1">✓ Valide</p>
+                    {/if}
                 </div>
+                {:else}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Numéro de licence</label>
+                    <p class="text-xs text-gray-500 mb-2">Non modifiable</p>
+                    <input 
+                        type="text" 
+                        value={currentUser.license_number}
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                        disabled
+                        readonly
+                    />
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <p class="text-xs text-gray-500 mb-2">Non modifiable</p>
+                    <input 
+                        type="email" 
+                        value={currentUser.email}
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 cursor-not-allowed"
+                        disabled
+                        readonly
+                    />
+                </div>
+                {/if}
                 
                 <div class="flex justify-end gap-4 mt-6">
                     <button 
@@ -201,3 +340,7 @@ FICHIER : src/routes/HomePage.svelte
     {/if}
     
 {/if}
+
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<!-- svelte-ignore a11y-label-has-associated-control -->

@@ -1,24 +1,24 @@
 {
   "joueurs": [
     {
-      "nom": "Martin",
-      "prenom": "Luc",
-      "entreprise": "TechVision",
-      "numero_licence": "L123456",
+      "first_name": "Luc",
+      "last_name": "Martin",
+      "company": "TechVision",
+      "license_number": "L123456",
       "email": "luc.martin@techvision.com"
     },
     {
-      "nom": "Dupont",
-      "prenom": "Sarah",
-      "entreprise": "GreenPulse",
-      "numero_licence": "L654321",
+      "first_name": "Sarah",
+      "last_name": "Dupont",
+      "company": "GreenPulse",
+      "license_number": "L654321",
       "email": "sarah.dupont@greenpulse.fr"
     },
     {
-      "nom": "Bernard",
-      "prenom": "Alexandre",
-      "entreprise": "NovaSystems",
-      "numero_licence": "L987654",
+      "first_name": "Alexandre",
+      "last_name": "Bernard",
+      "company": "NovaSystems",
+      "license_number": "L987654",
       "email": "alexandre.bernard@novasystems.eu"
     }
   ]
