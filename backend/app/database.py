@@ -31,6 +31,7 @@ def init_db():
     try:
         # Vérifier si un admin existe déjà
         admin = db.query(User).filter(User.email == "admin@padel.com").first()
+        print(admin)
         if not admin:
             admin = User(
                 last_name="Admin",

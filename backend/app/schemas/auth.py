@@ -3,6 +3,7 @@
 # ============================================
 
 from app.models.models import User
+from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field, field_validator
 import re
 
@@ -25,6 +26,12 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 class UserCreationRequest(BaseModel):
+    last_name: str
+    first_name: str
+    company: str
+    license_number: str
+    birth_date: datetime
+    photo_url: str
     email: str
     password: str
     role: str

@@ -20,7 +20,7 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     role = Column(String, nullable=False)  # JOUEUR ou ADMINISTRATEUR
     is_active = Column(Boolean, default=True)
-    must_change_password = Column(Boolean, default=False)
+    must_change_password = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
