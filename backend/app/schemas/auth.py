@@ -37,6 +37,9 @@ class UserCreationRequest(BaseModel):
     role: str
     is_active: bool
 
+class UserDeletionRequest(BaseModel):
+    email: str
+
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str

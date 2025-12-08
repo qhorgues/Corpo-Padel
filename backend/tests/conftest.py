@@ -74,12 +74,12 @@ def test_user(db_session):
 def test_admin(db_session):
     """Crée un administrateur de test"""
     admin = User(
-        last_name="Test",
-        first_name="Test",
-        company="Test",
-        license_number="Test",
+        last_name="Admin",
+        first_name="Admin",
+        company="Admin",
+        license_number="Admin",
         birth_date=func.now(),
-        photo_url="Test",
+        photo_url="Admin",
         email="admin@example.com",
         password_hash=get_password_hash("AdminP@ssw0rd123"),
         role="ADMINISTRATEUR",
