@@ -26,5 +26,5 @@ jobs:
           SONAR_HOST_URL: https://sonarcloud.io
         with:
           args: >
-            -Dsonar.projectKey=qhorgues_Corpo-Padle
+            -Dsonar.projectKey=Corpo-Padle
             -Dsonar.organization=qhorgues
