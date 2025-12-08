@@ -27,4 +27,4 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=qhorgues_Corpo-Padle
-            -Dsonar.organization=Corpo-Padle
+            -Dsonar.organization=qhorgues
