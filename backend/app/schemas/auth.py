@@ -2,7 +2,7 @@
 # FICHIER : backend/app/schemas/auth.py
 # ============================================
 
-from pydantic import BaseModel, EmailStr, Field, validator
+from pydantic import BaseModel, EmailStr, Field, validator,  ConfigDict
 import re
 
 class LoginRequest(BaseModel):
@@ -18,9 +18,10 @@ class UserResponse(BaseModel):
     email: str
     role: str
     must_change_password: bool
-    
-    class Config:
-        from_attributes = True
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -31,7 +32,7 @@ class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=12)
     confirm_password: str
-    
+
     @validator('new_password')
     def validate_password(cls, v):
         if len(v) < 12:
@@ -45,7 +46,7 @@ class ChangePasswordRequest(BaseModel):
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
             raise ValueError('Le mot de passe doit contenir au moins un caractère spécial')
         return v
-    
+
     @validator('confirm_password')
     def passwords_match(cls, v, values):
         if 'new_password' in values and v != values['new_password']:

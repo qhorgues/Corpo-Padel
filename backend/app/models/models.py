@@ -263,7 +263,7 @@ class LoginAttempt(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     # This attribute is the blocked account's email.
-    email = Column(String, index=True, nullable=False)
+    email = Column(String, index=True, nullable=False, unique=True)
 
     # This attribute is the number of attempts.
     attempts_count = Column(Integer, default=0)

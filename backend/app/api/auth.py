@@ -15,47 +15,38 @@ router = APIRouter()
 
 MAX_ATTEMPTS = 5
 LOCKOUT_MINUTES = 30
-attempts_count = 0
-locked_until = timedelta(0)
 
 def check_and_update_attempts(db: Session, email: str, success: bool = False):
     """Vérifie et met à jour les tentatives de connexion"""
-    attempt = db.query(LoginAttempt).filter(LoginAttempt.email == email).first()
+    attempt : LoginAttempt = db.query(LoginAttempt).filter(LoginAttempt.email == email).first()
 
-    global attempts_count
-    global locked_until
-
-    if not attempt:
+    if attempt is None:
         attempt = LoginAttempt(email=email)
         db.add(attempt)
-    
-    now = datetime.utcnow()
 
-    print(attempts_count)
-    
+    now = datetime.now()
+
     # Vérifier si le compte est bloqué
-    if attempts_count >= MAX_ATTEMPTS and locked_until > now:
-        print("bad1")
+    if attempt.attempts_count >= MAX_ATTEMPTS and attempt.locked_until > now:
         minutes_remaining = int((locked_until - now).total_seconds() / 60)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "message": "Compte bloqué",
-                "locked_until": locked_until.isoformat(),
+                "locked_until": attempt.locked_until.isoformat(),
                 "minutes_remaining": minutes_remaining
             }
         )
-    
+
     if success:
         # Réinitialiser les tentatives en cas de succès
-        attempts_count = 0
-        locked_until = None
+        attempt.attempts_count = 0
+        attempt.locked_until = None
     else:
         # Incrémenter les tentatives
-        attempts_count += 1
-        
-        if attempts_count >= MAX_ATTEMPTS:
-            print("bad2")
+        attempt.attempts_count += 1
+
+        if attempt.attempts_count >= MAX_ATTEMPTS:
             locked_until = now + timedelta(minutes=LOCKOUT_MINUTES)
             db.commit()
             raise HTTPException(
@@ -66,12 +57,11 @@ def check_and_update_attempts(db: Session, email: str, success: bool = False):
                     "minutes_remaining": LOCKOUT_MINUTES
                 }
             )
-    
+
     db.commit()
-    
+
     if not success:
-        print("good")
-        attempts_remaining = MAX_ATTEMPTS - attempts_count
+        attempts_remaining = MAX_ATTEMPTS - attempt.attempts_count
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
@@ -83,23 +73,23 @@ def check_and_update_attempts(db: Session, email: str, success: bool = False):
 @router.post("/login", response_model=TokenResponse)
 def login(credentials: LoginRequest, db: Session = Depends(get_db)):
     """Authentifie un utilisateur et retourne un token JWT"""
-    
+
     # Récupérer l'utilisateur
     user = db.query(User).filter(User.email == credentials.email).first()
-    
+
     # Vérifier les credentials
     if not user or not verify_password(credentials.password, user.password_hash):
         check_and_update_attempts(db, credentials.email, success=False)
-    
+
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Compte désactivé"
         )
-    
+
     # Réinitialiser les tentatives en cas de succès
     check_and_update_attempts(db, credentials.email, success=True)
-    
+
     # Créer le token
     access_token = create_access_token(
         data={
@@ -108,11 +98,11 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
             "role": user.role
         }
     )
-    
+
     return TokenResponse(
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse.from_orm(user)
+        user=UserResponse.model_validate(user)
     )
 
 @router.post("/change-password")
@@ -122,26 +112,26 @@ def change_password(
     db: Session = Depends(get_db)
 ):
     """Change le mot de passe de l'utilisateur connecté"""
-    
+
     # Vérifier le mot de passe actuel
     if not verify_password(request.current_password, current_user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Mot de passe actuel incorrect"
         )
-    
+
     # Vérifier que le nouveau mot de passe est différent
     if verify_password(request.new_password, current_user.password_hash):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Le nouveau mot de passe doit être différent de l'ancien"
         )
-    
+
     # Mettre à jour le mot de passe
     current_user.password_hash = get_password_hash(request.new_password)
     current_user.must_change_password = False
     db.commit()
-    
+
     return {"message": "Mot de passe modifié avec succès"}
 
 @router.post("/logout")
