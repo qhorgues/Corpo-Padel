@@ -1,10 +1,10 @@
 # app/schemas/result.py
 from datetime import date
 from typing import List
-from pydantic import ModelBase, ConfigDict
+from pydantic import BaseModel, ConfigDict
 
 
-class OpponentsResponse(ModelBase):
+class OpponentsResponse(BaseModel):
     """
     This class is a soft resume of the opponent.
     """
@@ -21,7 +21,7 @@ class OpponentsResponse(ModelBase):
 
 
 
-class ResultItemResponse(ModelBase):
+class ResultItemResponse(BaseModel):
     """
     This class is the result of a specific match.
     """
@@ -50,7 +50,7 @@ class ResultItemResponse(ModelBase):
 
 
 
-class StatisticsResponse(ModelBase):
+class StatisticsResponse(BaseModel):
     """
     This is a soft information in statistic of a player.
     """
@@ -73,7 +73,7 @@ class StatisticsResponse(ModelBase):
 
 
 
-class MyResultsResponse(ModelBase):
+class MyResultsResponse(BaseModel):
     """
     This is the DTO of the response.
     """

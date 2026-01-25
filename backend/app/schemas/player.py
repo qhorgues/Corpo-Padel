@@ -1,7 +1,21 @@
 # app/schemas/player.py
+from enum import Enum
 from datetime import date
 from typing import Optional, List
 from pydantic import BaseModel, EmailStr, ConfigDict
+
+class UserRole(str, Enum):
+    """
+    This class is the enumeration of the role.
+    """
+
+    # The user is an admin.
+    ADMINISTRATEUR = "ADMINITRATEUR"
+
+    # The user is a player.
+    JOUEUR = "JOUEUR"
+
+    
 
 class PlayerResponse(BaseModel):
     """

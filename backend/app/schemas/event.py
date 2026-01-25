@@ -1,11 +1,11 @@
 # app/schemas/event.py
 from datetime import date, time
 from typing import List
-from pydantic import ModelBase, ConfigDict
+from pydantic import BaseModel, ConfigDict
 from .match import MatchResponse, MatchRequest
 
 
-class EventResponse(ModelBase):
+class EventResponse(BaseModel):
     """
     This class is a DTO for a event response.
     """
@@ -28,7 +28,7 @@ class EventResponse(ModelBase):
 
 
 
-class EventRequest(ModelBase):
+class EventRequest(BaseModel):
     """
     This class is a DTO for a event request.
     """
@@ -48,7 +48,7 @@ class EventRequest(ModelBase):
 
 
 
-class EventsListResponse(ModelBase):
+class EventsListResponse(BaseModel):
     """
     This class is the list of mtaches... Just because in the spec it has.
     """
