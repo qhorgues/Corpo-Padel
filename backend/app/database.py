@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.sql import func
 from app.core.config import settings
 
 engine = create_engine(
@@ -31,8 +31,15 @@ def init_db():
     try:
         # Vérifier si un admin existe déjà
         admin = db.query(User).filter(User.email == "admin@padel.com").first()
+        print(admin)
         if not admin:
             admin = User(
+                last_name="Admin",
+                first_name="Admin",
+                company="Admin",
+                license_number="Admin",
+                birth_date=func.now(),
+                photo_url="Admin",
                 email="admin@padel.com",
                 password_hash=get_password_hash("Admin@2025!"),
                 role="ADMINISTRATEUR",

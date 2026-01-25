@@ -32,7 +32,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
 
     # This attribute represents if the user need to change their password.
-    must_change_password = Column(Boolean, default=False)
+    must_change_password = Column(Boolean, default=True)
 
     # This attribute represents when the user is created.
     created_at = Column(DateTime(timezone=True), server_default=func.now())

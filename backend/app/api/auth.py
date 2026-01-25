@@ -28,7 +28,7 @@ def check_and_update_attempts(db: Session, email: str, success: bool = False):
 
     # Vérifier si le compte est bloqué
     if attempt.attempts_count >= MAX_ATTEMPTS and attempt.locked_until > now:
-        minutes_remaining = int((locked_until - now).total_seconds() / 60)
+        minutes_remaining = int((attempt.locked_until - now).total_seconds() / 60)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -45,15 +45,16 @@ def check_and_update_attempts(db: Session, email: str, success: bool = False):
     else:
         # Incrémenter les tentatives
         attempt.attempts_count += 1
-
+        attempt.last_attempt = now
+        
         if attempt.attempts_count >= MAX_ATTEMPTS:
-            locked_until = now + timedelta(minutes=LOCKOUT_MINUTES)
+            attempt.locked_until = now + timedelta(minutes=LOCKOUT_MINUTES)
             db.commit()
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "message": "Compte bloqué après 5 tentatives échouées",
-                    "locked_until": locked_until.isoformat(),
+                    "locked_until": attempt.locked_until.isoformat(),
                     "minutes_remaining": LOCKOUT_MINUTES
                 }
             )

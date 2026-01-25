@@ -5,8 +5,8 @@
 import pytest
 from fastapi import status
 
-def test_login_success(client, test_user):
-    """Test connexion avec credentials valides"""
+def test_login_success_user(client, test_user):
+    """Test connexion avec credentials valides pour un utilisateur"""
     response = client.post("/api/v1/auth/login", json={
         "email": "test@example.com",
         "password": "ValidP@ssw0rd123"
@@ -18,6 +18,20 @@ def test_login_success(client, test_user):
     assert data["token_type"] == "bearer"
     assert data["user"]["email"] == "test@example.com"
     assert data["user"]["role"] == "JOUEUR"
+
+def test_login_success_admin(client, test_admin):
+    """Test connexion avec credentials valides pour un admin"""
+    response = client.post("/api/v1/auth/login", json={
+        "email": "admin@example.com",
+        "password": "AdminP@ssw0rd123"
+    })
+    
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
+    assert data["user"]["email"] == "admin@example.com"
+    assert data["user"]["role"] == "ADMINISTRATEUR"
 
 def test_login_invalid_email(client, test_user):
     """Test connexion avec email invalide"""
@@ -41,11 +55,11 @@ def test_login_invalid_password(client, test_user):
     data = response.json()
     assert "attempts_remaining" in data["detail"]
 
-def test_brute_force_protection(client_block, test_user):
+def test_brute_force_protection(client, test_user):
     """Test blocage après 5 tentatives échouées"""
     # Faire 5 tentatives échouées
     for i in range(5):
-        response = client_block.post("/api/v1/auth/login", json={
+        response = client.post("/api/v1/auth/login", json={
             "email": "test@example.com",
             "password": "WrongPassword"
         })
@@ -58,7 +72,7 @@ def test_brute_force_protection(client_block, test_user):
             assert response.status_code == status.HTTP_403_FORBIDDEN
     
     # La 6ème tentative doit être bloquée même avec le bon mot de passe
-    response = client_block.post("/api/v1/auth/login", json={
+    response = client.post("/api/v1/auth/login", json={
         "email": "test@example.com",
         "password": "ValidP@ssw0rd123"
     })
@@ -67,6 +81,69 @@ def test_brute_force_protection(client_block, test_user):
     data = response.json()
     assert "locked_until" in data["detail"]
     assert "minutes_remaining" in data["detail"]
+
+def test_change_password(client, test_user):
+    """Test de changement de mot de passe"""
+    login_response = client.post("/api/v1/auth/login", json={
+        "email": "test@example.com",
+        "password": "ValidP@ssw0rd123"
+    })
+    token = login_response.json()["access_token"]
+    
+    # Utiliser le token pour accéder à une route protégée
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = client.post("/api/v1/auth/change-password", headers=headers, json={
+        "current_password": "ValidP@ssw0rd123",
+        "new_password": "NewP@ssw0rd123!",
+        "confirm_password": "NewP@ssw0rd123!"
+    })
+
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert "succès" in data["message"]
+
+def test_change_password_invalid_password(client, test_user):
+    """Test de changement de mot de passe avec mot de passe incorrecte"""
+    login_response = client.post("/api/v1/auth/login", json={
+        "email": "test@example.com",
+        "password": "ValidP@ssw0rd123"
+    })
+    token = login_response.json()["access_token"]
+    
+    # Utiliser le token pour accéder à une route protégée
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = client.post("/api/v1/auth/change-password", headers=headers, json={
+        "current_password": "WrongPassword",
+        "new_password": "NewP@ssw0rd123!",
+        "confirm_password": "NewP@ssw0rd123!"
+    })
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    data = response.json()
+    assert "actuel incorrect" in data["detail"]
+
+def test_change_password_same_password(client, test_user):
+    """Test de changement de mot de passe avec nouveau mot de passe identique"""
+    login_response = client.post("/api/v1/auth/login", json={
+        "email": "test@example.com",
+        "password": "ValidP@ssw0rd123"
+    })
+    token = login_response.json()["access_token"]
+    
+    # Utiliser le token pour accéder à une route protégée
+    headers = {"Authorization": f"Bearer {token}"}
+
+    response = client.post("/api/v1/auth/change-password", headers=headers, json={
+        "current_password": "ValidP@ssw0rd123",
+        "new_password": "ValidP@ssw0rd123",
+        "confirm_password": "ValidP@ssw0rd123"
+    })
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    data = response.json()
+    assert "différent de l'ancien" in data["detail"]
 
 def test_login_inactive_user(client, db_session, test_user):
     """Test connexion avec compte désactivé"""

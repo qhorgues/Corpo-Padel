@@ -82,7 +82,7 @@ uvicorn app.main:app --reload
 
 ### Frontend
 ```bash
-cd frontend
+cd frontend-svelte
 npm install
 cp .env.example .env
 npm run dev
