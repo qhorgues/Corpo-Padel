@@ -26,6 +26,7 @@ def list_players(db: Session = Depends(get_db), _: str = Depends(get_current_use
     )
 
 
+
 @router.get("/{player_id}", response_model=PlayerResponse)
 def get_player(player_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_user)):
     """
@@ -120,7 +121,7 @@ def update_player(player_id: int, data: PlayerRequest, db: Session = Depends(get
     player.license_number = data.license_number
     player.birth_date = data.birth_date
     player.photo_url = data.photo_url
-    
+
     db.commit()
 
     return PlayerResponse.model_validate(player)
@@ -130,7 +131,7 @@ def update_player(player_id: int, data: PlayerRequest, db: Session = Depends(get
 @router.delete("/{player_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_player(player_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
     """
-    This function gets a specific player.
+    This function remove a player.
 
     param : player_id - The player's id.
     param : db - The session of database.
@@ -147,5 +148,3 @@ def delete_player(player_id: int, db: Session = Depends(get_db), _: str = Depend
 
     db.delete(player)
     db.commit()
-
-    return
