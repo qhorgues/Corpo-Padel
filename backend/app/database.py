@@ -22,7 +22,7 @@ def get_db():
 
 def init_db():
     """Initialise la base de données avec un admin par défaut"""
-    from app.models.models import User, Base
+    from app.models.models import User, Player, Base
     from app.core.security import get_password_hash
     
     Base.metadata.create_all(bind=engine)
@@ -31,21 +31,24 @@ def init_db():
     try:
         # Vérifier si un admin existe déjà
         admin = db.query(User).filter(User.email == "admin@padel.com").first()
-        print(admin)
         if not admin:
             admin = User(
-                last_name="Admin",
-                first_name="Admin",
-                company="Admin",
-                license_number="Admin",
-                birth_date=func.now(),
-                photo_url="Admin",
                 email="admin@padel.com",
                 password_hash=get_password_hash("Admin@2025!"),
                 role="ADMINISTRATEUR",
-                is_active=True
+                must_change_password=False
             )
             db.add(admin)
+            player = Player(
+                last_name="Admin",
+                first_name="Admin",
+                company="Admin",
+                license_number="L000000",
+                birth_date=func.current_date(),
+                photo_url="Admin",
+                user=admin
+            )
+            db.add(player)
             db.commit()
             print("✅ Admin créé : admin@padel.com / Admin@2025!")
         else:
