@@ -34,6 +34,7 @@ class PlayerResponse(BaseModel):
     )
 
 
+
 class PlayerRequest(BaseModel):
     """
     This class is the DTO of a player request.
@@ -62,11 +63,16 @@ class PlayerRequest(BaseModel):
     )
 
 
+
 class PlayersListResponse(BaseModel):
     """
     This class is the list of players... Just because in the spec it has.
     """
+
+    # This is the list of players.
     players: List[PlayerResponse]
+
+    # This is the total in the request.
     total: int
 
     model_config = ConfigDict(
