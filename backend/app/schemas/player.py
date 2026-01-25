@@ -15,7 +15,7 @@ class UserRole(str, Enum):
     # The user is a player.
     JOUEUR = "JOUEUR"
 
-    
+
 
 class PlayerResponse(BaseModel):
     """
@@ -71,6 +71,9 @@ class PlayerRequest(BaseModel):
 
     # This is the player's password.
     password: str
+
+    # This si the player's role.
+    role: UserRole
 
     model_config = ConfigDict(
         from_attributes=True
