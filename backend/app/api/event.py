@@ -55,29 +55,29 @@ def create_event(data: EventRequest, db: Session = Depends(get_db), _: str = Dep
     return : Return the event created.
     """
     if data.event_date < date.today():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Back to the future")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Back to the future")
     
     if not re.match(r"^(?:[01]\d|2[0-3]):[0-5]\d$", data.event_time):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="event_time must be in HH:MM format (00:00–23:59)")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="event_time must be in HH:MM format (00:00–23:59)")
 
     if len(data.matches) < 1 or len(data.matches) > 3:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Matches need to be 1 to 3")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Matches need to be 1 to 3")
     
     pool_set = {}
     team_set = {}
     for match in data.matches:
         if match.court_number < 1 or match.court_number > 10:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Court need to be 1 to 10")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Court need to be 1 to 10")
         
         if match.team1_id == match.team2_id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="One teams in the match")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One teams in the match")
         
         if match.court_number in pool_set:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Two matchs in the same pool")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Two matchs in the same pool")
         pool_set.add(match.court_number)
 
         if match.team2_id in team_set or match.team1_id in team_set:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="A team is playing twice in the same time")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A team is playing twice in the same time")
         team_set.add(match.team1_id)
         team_set.add(match.team2_id)
 
@@ -121,29 +121,29 @@ def update_event(event_id: int, data: EventRequest, db: Session = Depends(get_db
     return : Return the event updated.
     """
     if data.event_date < date.today():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Back to the future")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Back to the future")
     
     if not re.match(r"^(?:[01]\d|2[0-3]):[0-5]\d$", data.event_time):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="event_time must be in HH:MM format (00:00–23:59)")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="event_time must be in HH:MM format (00:00–23:59)")
 
     if len(data.matches) < 1 or len(data.matches) > 3:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Matches need to be 1 to 3")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Matches need to be 1 to 3")
     
     pool_set = {}
     team_set = {}
     for match in data.matches:
         if match.court_number < 1 or match.court_number > 10:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Court need to be 1 to 10")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Court need to be 1 to 10")
         
         if match.team1_id == match.team2_id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="One teams in the match")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="One teams in the match")
         
         if match.court_number in pool_set:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Two matchs in the same pool")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Two matchs in the same pool")
         pool_set.add(match.court_number)
 
         if match.team2_id in team_set or match.team1_id in team_set:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="A team is playing twice in the same time")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A team is playing twice in the same time")
         team_set.add(match.team1_id)
         team_set.add(match.team2_id)
         
