@@ -89,7 +89,7 @@ class TeamRequest(BaseModel):
 
 class TeamsListResponse(BaseModel):
     """
-    This class is the list of players... Just because in the spec it has.
+    This class is the list of teams... Just because in the spec it has.
     """
 
     # This is the list of teams.
