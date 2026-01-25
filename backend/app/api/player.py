@@ -109,25 +109,18 @@ def update_player(player_id: int, data: PlayerRequest, db: Session = Depends(get
             detail="Player not found",
         )
 
-    user = db.query(User).filter(User.id == player.user_id).first()
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Player not linked",
-        )
+    user = player.user
+    user.email = data.email
+    user.password_hash = get_password_hash(data.password)
+    user.role = data.role
     
-    user = User(email = data.email,
-                password_hash = get_password_hash(data.password),
-                role = data.role
-            )
-    player = Player(first_name = data.first_name,
-                    last_name = data.last_name,
-                    company = data.company,
-                    license_number = data.license_number,
-                    birth_date = data.birth_date,
-                    photo_url = data.photo_url,
-                    user = user
-                )
+    player.first_name = data.first_name
+    player.last_name = data.last_name
+    player.company = data.company
+    player.license_number = data.license_number
+    player.birth_date = data.birth_date
+    player.photo_url = data.photo_url
+    
     db.commit()
 
     return PlayerResponse.model_validate(player)
