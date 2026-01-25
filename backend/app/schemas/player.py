@@ -75,6 +75,12 @@ class PlayerRequest(BaseModel):
     # This si the player's role.
     role: UserRole
 
+    # This is the player's birth date.
+    birth_date: Optional[date] = None
+
+    # This is the player's profile picture.
+    photo_url: Optional[str] = None
+
     model_config = ConfigDict(
         from_attributes=True
     )
