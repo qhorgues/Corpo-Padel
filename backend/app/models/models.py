@@ -216,10 +216,10 @@ class Match(Base):
     )
 
     # This attribute is the score of the first team.
-    score_team1 = Column(String)
+    score_team1 = Column(Integer)
 
     # This attribute is the score of the second team.
-    score_team2 = Column(String)
+    score_team2 = Column(Integer)
 
     # This attribute represents when the match is created.
     created_at = Column(DateTime(timezone=True), server_default=func.now())

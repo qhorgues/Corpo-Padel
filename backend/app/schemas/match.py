@@ -71,10 +71,10 @@ class MatchRequest(BaseModel):
     team2_id: int
 
     # The score of first team in the match.
-    score_team1: Optional[str] = None
+    score_team1: Optional[int] = None
 
     # The score of second team in the match.
-    score_team2: Optional[str] = None
+    score_team2: Optional[int] = None
 
     model_config = ConfigDict(
         from_attributes=True
