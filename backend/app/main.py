@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.api import auth, player, team, event, match
+from app.api import auth, player, team, event, match, pool
 from app.database import engine
 from app.models import models
 
@@ -38,6 +38,7 @@ app.include_router(player.router, prefix="/api/v1/players", tags=["User"])
 app.include_router(team.router, prefix="/api/v1/teams", tags=["Team"])
 app.include_router(event.router, prefix="/api/v1/events", tags=["Event"])
 app.include_router(match.router, prefix="/api/v1/matches", tags=["Match"])
+app.include_router(pool.router, prefix="/api/v1/pools", tags=["Pool"])
 
 @app.get("/")
 def read_root():
