@@ -4,8 +4,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.api.deps import get_current_user
 from app.models.models import User, Player
-from app.schemas.profile import ProfileResponse, ProfilePlayer, ProfileUser
-from app.schemas.player import PlayerRequest
+from app.schemas.profile import ProfilePhoto, ProfileResponse, ProfilePlayer, ProfileUser, ProfilePlayerRequest
 
 router = APIRouter()
 
@@ -35,7 +34,7 @@ def get_profile(db: Session = Depends(get_db), current_user: User = Depends(get_
 
 
 @router.put("/me", response_model=ProfileResponse)
-def update_profile(data: PlayerRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def update_profile(data: ProfilePlayerRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     This function updates the current user's profile.
 
@@ -69,8 +68,8 @@ def update_profile(data: PlayerRequest, db: Session = Depends(get_db), current_u
 
 
 
-@router.post("/me/photo", status_code=status.HTTP_201_CREATED)
-def upload_profile_photo(uri: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+@router.put("/me/photo", status_code=status.HTTP_201_CREATED)
+def upload_profile_photo(data: ProfilePhoto, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     This function stores the profile photo URI.
 
@@ -87,7 +86,7 @@ def upload_profile_photo(uri: str, db: Session = Depends(get_db), current_user: 
             detail="Player not found",
         )
 
-    player.photo_url = uri
+    player.photo_url = data.photo_url
     db.commit()
     db.refresh(player)
 
