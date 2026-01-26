@@ -93,6 +93,7 @@ def create_event(data: EventRequest, db: Session = Depends(get_db), _: str = Dep
         team2 = db.query(Team).get(match.team2_id)
 
         if team1 is None or team2 is None:
+            db.rollback()
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="One team not found")
 
         db.add(Match(
@@ -161,6 +162,7 @@ def update_event(event_id: int, data: EventRequest, db: Session = Depends(get_db
         team2 = db.query(Team).get(match.team2_id)
 
         if team1 is None or team2 is None:
+            db.rollback()
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="One team not found")
 
         db.add(Match(

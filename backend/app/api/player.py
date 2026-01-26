@@ -37,7 +37,7 @@ def get_player(player_id: int, db: Session = Depends(get_db), _: str = Depends(g
     param : _ - The client.
     return : Return the player.
     """
-    player = db.query(Player).get(player_id)
+    player = db.get(Player, player_id)
 
     if not player:
         raise HTTPException(
@@ -61,28 +61,32 @@ def create_player(data: PlayerRequest, db: Session = Depends(get_db), _: str = D
     """
     from app.core.security import get_password_hash #Dynamic import, because need to initialize .env
     
-    user = db.query(User).filter(User.email == data.email).first()
-    if user is not None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already exists"
-        )
-
-    user = User(email = data.email,
-                password_hash = get_password_hash(data.password),
-                role = data.role
+    try:
+        user = db.query(User).filter(User.email == data.email).first()
+        if user is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already exists"
             )
-    db.add(user)
-    player = Player(first_name = data.first_name,
-                    last_name = data.last_name,
-                    company = data.company,
-                    license_number = data.license_number,
-                    birth_date = data.birth_date,
-                    photo_url = data.photo_url,
-                    user = user
+
+        user = User(email = data.email,
+                    password_hash = get_password_hash(data.password),
+                    role = data.role
                 )
-    db.add(player)
-    db.commit()
+        db.add(user)
+        player = Player(first_name = data.first_name,
+                        last_name = data.last_name,
+                        company = data.company,
+                        license_number = data.license_number,
+                        birth_date = data.birth_date,
+                        photo_url = data.photo_url,
+                        user = user
+                    )
+        db.add(player)
+        db.commit()
+    except:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid field")
     db.refresh(player)
 
     return PlayerResponse.model_validate(player)
@@ -102,27 +106,31 @@ def update_player(player_id: int, data: PlayerRequest, db: Session = Depends(get
     """
     from app.core.security import get_password_hash #Dynamic import, because need to initialize .env
 
-    player = db.query(Player).get(player_id)
+    player = db.get(Player, player_id)
 
     if not player:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Player not found",
         )
 
-    user = player.user
-    user.email = data.email
-    user.password_hash = get_password_hash(data.password)
-    user.role = data.role
-    
-    player.first_name = data.first_name
-    player.last_name = data.last_name
-    player.company = data.company
-    player.license_number = data.license_number
-    player.birth_date = data.birth_date
-    player.photo_url = data.photo_url
+    try:
+        user = player.user
+        user.email = data.email
+        user.password_hash = get_password_hash(data.password)
+        user.role = data.role
+        
+        player.first_name = data.first_name
+        player.last_name = data.last_name
+        player.company = data.company
+        player.license_number = data.license_number
+        player.birth_date = data.birth_date
+        player.photo_url = data.photo_url
 
-    db.commit()
+        db.commit()
+    except:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid field")
 
     return PlayerResponse.model_validate(player)
 
@@ -138,7 +146,7 @@ def delete_player(player_id: int, db: Session = Depends(get_db), _: str = Depend
     param : _ - The client.
     return : Return no content
     """
-    player = db.query(Player).get(player_id)
+    player = db.get(Player, player_id)
 
     if not player:
         raise HTTPException(

@@ -2,7 +2,12 @@
 from enum import Enum
 from datetime import date
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
+
+def not_blank(v: str) -> str:
+    if v is None or not v.strip():
+        raise ValueError("Field cannot be blank")
+    return v
 
 class UserRole(str, Enum):
     """
@@ -80,6 +85,17 @@ class PlayerRequest(BaseModel):
 
     # This is the player's profile picture.
     photo_url: Optional[str] = None
+
+    @field_validator(
+        "first_name",
+        "last_name",
+        "company",
+        "license_number",
+        "email",
+    )
+    @classmethod
+    def validate_not_blank(cls, v):
+        return not_blank(v)
 
     model_config = ConfigDict(
         from_attributes=True

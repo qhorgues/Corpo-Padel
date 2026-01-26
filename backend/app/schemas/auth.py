@@ -2,7 +2,7 @@
 # FICHIER : backend/app/schemas/auth.py
 # ============================================
 
-from pydantic import BaseModel, EmailStr, Field, validator,  ConfigDict
+from pydantic import BaseModel, EmailStr, Field, field_validator,  ConfigDict
 from datetime import datetime
 import re
 
@@ -49,7 +49,8 @@ class ChangePasswordRequest(BaseModel):
     new_password: str = Field(...)
     confirm_password: str
 
-    @validator('new_password')
+    @field_validator("new_password")
+    @classmethod
     def validate_password(cls, v):
         if len(v) < 12:
             raise ValueError('Le mot de passe doit contenir au moins 12 caractères')
@@ -67,7 +68,8 @@ class ChangePasswordRequest(BaseModel):
             raise ValueError('Le mot de passe ne doit pas contenir des espaces')
         return v
     
-    @validator('confirm_password')
+    @field_validator('confirm_password')
+    @classmethod
     def passwords_match(cls, v, values):
         if 'new_password' in values.data and v != values.data['new_password']:
             raise ValueError('Les mots de passe ne correspondent pas')
