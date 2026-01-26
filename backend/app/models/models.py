@@ -269,7 +269,7 @@ class LoginAttempt(Base):
     attempts_count = Column(Integer, default=0)
 
     # This attribute is when was the last attempts.
-    last_attempt = Column(DateTime(timezone=True))
+    last_attempt = Column(DateTime(timezone=True), default=func.now())
 
     # This attribute is when the account is unlucked.
-    locked_until = Column(DateTime(timezone=True), nullable=True)
+    locked_until = Column(DateTime(timezone=True), nullable=True, default=func.now())

@@ -4,6 +4,7 @@
 
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.models import User, LoginAttempt
@@ -21,7 +22,12 @@ def check_and_update_attempts(db: Session, email: str, success: bool = False):
     attempt : LoginAttempt = db.query(LoginAttempt).filter(LoginAttempt.email == email).first()
 
     if attempt is None:
-        attempt = LoginAttempt(email=email)
+        attempt = LoginAttempt(
+            email=email,
+            attempts_count=0,
+            locked_until=func.now(),
+            last_attempt=func.now()
+        )
         db.add(attempt)
 
     now = datetime.now()
