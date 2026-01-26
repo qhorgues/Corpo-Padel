@@ -2,7 +2,31 @@
 from datetime import date, time
 from typing import List
 from pydantic import BaseModel, ConfigDict
-from .match import MatchResponse, MatchRequest
+from .match import MatchResponse, MatchRequest, MatchStatus
+
+class MatchMini(BaseModel):
+    """
+    This class is a soft DTO of match response.
+    """
+
+    # This is the match's id.
+    id: int
+
+    # This is the match's court.
+    court_number: int
+
+    # This is the first team in the match.
+    team1_id: int
+
+    # This is the second team in the match.
+    team2_id: int
+
+    # This is the status of the match.
+    status: MatchStatus
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 
 class EventResponse(BaseModel):
@@ -20,7 +44,7 @@ class EventResponse(BaseModel):
     event_time: time
 
     # The matches in the event.
-    matches: List[MatchResponse]
+    matches: List[MatchMini]
 
     model_config = ConfigDict(
         from_attributes=True

@@ -1,14 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from datetime import date
-import re
 
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
 from app.models.models import Event, Match, Team
-from app.schemas.event import EventRequest, EventResponse, EventsListResponse
+from app.schemas.event import EventRequest, EventResponse, EventsListResponse, MatchMini
 
 router = APIRouter()
 
@@ -37,7 +35,7 @@ def get_event(event_id: int, db: Session = Depends(get_db), _: str = Depends(get
     param : _ - The client.
     return : Return the event.
     """
-    event = db.query(Event).get(event_id)
+    event = db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     return EventResponse.model_validate(event)
@@ -56,15 +54,12 @@ def create_event(data: EventRequest, db: Session = Depends(get_db), _: str = Dep
     """
     if data.event_date < date.today():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Back to the future")
-    
-    if not re.match(r"^(?:[01]\d|2[0-3]):[0-5]\d$", data.event_time):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="event_time must be in HH:MM format (00:00–23:59)")
 
     if len(data.matches) < 1 or len(data.matches) > 3:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Matches need to be 1 to 3")
     
-    pool_set = {}
-    team_set = {}
+    pool_set = set()
+    team_set = set()
     for match in data.matches:
         if match.court_number < 1 or match.court_number > 10:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Court need to be 1 to 10")
@@ -89,8 +84,8 @@ def create_event(data: EventRequest, db: Session = Depends(get_db), _: str = Dep
     db.add(event)
 
     for match in data.matches:
-        team1 = db.query(Team).get(match.team1_id)
-        team2 = db.query(Team).get(match.team2_id)
+        team1 = db.get(Team, match.team1_id)
+        team2 = db.get(Team, match.team2_id)
 
         if team1 is None or team2 is None:
             db.rollback()
@@ -106,7 +101,12 @@ def create_event(data: EventRequest, db: Session = Depends(get_db), _: str = Dep
 
     db.commit()
     db.refresh(event)
-    return EventResponse.model_validate(event)
+    return EventResponse(
+        id=event.id,
+        event_date=event.event_date,
+        event_time=event.event_time,
+        matches=[MatchMini.model_validate(match) for match in event.matches]
+    )
 
 
 
@@ -123,15 +123,12 @@ def update_event(event_id: int, data: EventRequest, db: Session = Depends(get_db
     """
     if data.event_date < date.today():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Back to the future")
-    
-    if not re.match(r"^(?:[01]\d|2[0-3]):[0-5]\d$", data.event_time):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="event_time must be in HH:MM format (00:00–23:59)")
 
     if len(data.matches) < 1 or len(data.matches) > 3:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Matches need to be 1 to 3")
     
-    pool_set = {}
-    team_set = {}
+    pool_set = set()
+    team_set = set()
     for match in data.matches:
         if match.court_number < 1 or match.court_number > 10:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Court need to be 1 to 10")
@@ -148,18 +145,19 @@ def update_event(event_id: int, data: EventRequest, db: Session = Depends(get_db
         team_set.add(match.team1_id)
         team_set.add(match.team2_id)
         
-    event = db.query(Event).get(event_id)
+    event = db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     
     event.event_date = data.event_date
     event.event_time = data.event_time
 
-    db.delete(event.matches)
+    for match in event.matches:
+        db.delete(match)
 
     for match in data.matches:
-        team1 = db.query(Team).get(match.team1_id)
-        team2 = db.query(Team).get(match.team2_id)
+        team1 = db.get(Team, match.team1_id)
+        team2 = db.get(Team, match.team2_id)
 
         if team1 is None or team2 is None:
             db.rollback()
@@ -174,7 +172,12 @@ def update_event(event_id: int, data: EventRequest, db: Session = Depends(get_db
         )
 
     db.commit()
-    return EventResponse.model_validate(event)
+    return EventResponse(
+        id=event.id,
+        event_date=event.event_date,
+        event_time=event.event_time,
+        matches=[MatchMini.model_validate(match) for match in event.matches]
+    )
 
 
 
@@ -188,7 +191,7 @@ def delete_event(event_id: int, db: Session = Depends(get_db), _: str = Depends(
     param : _ - The client.
     return : Return no content
     """
-    event = db.query(Event).get(event_id)
+    event = db.get(Event, event_id)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
     

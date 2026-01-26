@@ -2,64 +2,6 @@ from datetime import time
 import pytest
 from sqlalchemy import func
 
-@pytest.fixture
-def players(db_session):
-    from app.models.models import Player, User
-
-    players = []
-    for i in range(12):
-        user = User(
-            email=f"p{i}@test.com",
-            password_hash="x",
-            role="JOUEUR"
-        )
-        player = Player(
-            first_name=f"P{i}",
-            last_name="Test",
-            company="ACME",
-            license_number=f"L{100000+i}",
-            user=user
-        )
-        db_session.add(player)
-        players.append(player)
-
-    db_session.commit()
-    return players
-
-
-
-@pytest.fixture
-def teams(db_session, players):
-    from app.models.models import Team
-
-    teams = []
-    for i in range(6):
-        team = Team(
-            company=f"Team {i}",
-            player1_id=players[i*2].id,
-            player2_id=players[i*2+1].id,
-        )
-        db_session.add(team)
-        teams.append(team)
-
-    db_session.commit()
-    return teams
-
-
-
-@pytest.fixture
-def pool_in_db(db_session, teams):
-    from app.models.models import Pool
-
-    pool = Pool(name="Pool DB")
-    pool.teams = teams
-    db_session.add(pool)
-    db_session.commit()
-    db_session.refresh(pool)
-    return pool
-
-
-
 def test_create_pool_not_authenticated(client, teams, auth_none):
     payload = {
         "name": "Pool X",
