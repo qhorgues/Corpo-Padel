@@ -14,7 +14,7 @@ class MatchStatus(str, Enum):
     A_VENIR = "A_VENIR"
 
     # The match is playing.
-    EN_COURS = "EN_COURS"
+    ANNULE = "ANNULE"
 
     # The match is over.
     TERMINE = "TERMINE"

@@ -1,9 +1,11 @@
+from datetime import time
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
-from app.models.models import Match
+from app.models.models import Event, Match, Team
 from app.schemas.match import MatchRequest, MatchResponse, MatchesListResponse
 
 router = APIRouter()
@@ -33,7 +35,7 @@ def get_match(match_id: int, db: Session = Depends(get_db), _: str = Depends(get
     param : _ - The client.
     return : Return the match.
     """
-    match = db.query(Match).get(match_id)
+    match = db.get(Match, match_id)
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
     return MatchResponse.model_validate(match)
@@ -55,11 +57,32 @@ def create_match(data: MatchRequest, db: Session = Depends(get_db), _: str = Dep
     
     if data.court_number < 1 or data.court_number > 10:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Court need to be 1 to 10")
+    try:
+        team1 = db.get(Team, data.team1_id)
+        team2 = db.get(Team, data.team2_id)
 
-    match = Match(**data.model_dump())
-    db.add(match)
-    db.commit()
-    db.refresh(match)
+        if team1 is None or team2 is None:
+            db.rollback()
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Team not found")
+        
+        event = Event(event_date=func.current_date(), event_time=time())
+        db.add(event)
+
+        match = Match(
+            court_number=data.court_number,
+            status=data.status,
+            score_team1=data.score_team1,
+            score_team2=data.score_team2,
+            team1=team1,
+            team2=team2,
+            event=event
+        )
+        db.add(match)
+        db.commit()
+        db.refresh(match)
+    except:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Error in the field")
     return MatchResponse.model_validate(match)
 
 
@@ -81,14 +104,30 @@ def update_match(match_id: int, data: MatchRequest, db: Session = Depends(get_db
     if data.court_number < 1 or data.court_number > 10:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Court need to be 1 to 10")
     
-    match = db.query(Match).get(match_id)
+    match = db.get(Match, match_id)
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
+        
+    try:
 
-    for key, value in data.model_dump().items():
-        setattr(match, key, value)
+        team1 = db.get(Team, data.team1_id)
+        team2 = db.get(Team, data.team2_id)
 
-    db.commit()
+        if team1 is None or team2 is None:
+            db.rollback()
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Team not found")
+
+        match.court_number=data.court_number
+        match.status=data.status
+        match.score_team1=data.score_team1
+        match.score_team2=data.score_team2
+        match.team1=team1
+        match.team2=team2
+
+        db.commit()
+    except:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Error in the field")
     return MatchResponse.model_validate(match)
 
 
@@ -103,9 +142,12 @@ def delete_match(match_id: int, db: Session = Depends(get_db), _: str = Depends(
     param : _ - The client.
     return : Return no content
     """
-    match = db.query(Match).get(match_id)
+    match = db.get(Match, match_id)
     if not match:
         raise HTTPException(status_code=404, detail="Match not found")
+    
+    if match.status != "A_VENIR":
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The match is over or canceled.")
 
     db.delete(match)
     db.commit()
