@@ -63,7 +63,7 @@ def test_user(db_session):
         last_name="Test",
         first_name="Test",
         company="Test",
-        license_number="L111111",
+        license_number="L111151",
         birth_date=func.current_date(),
         photo_url="Test",
         user=user
