@@ -19,7 +19,7 @@ class PoolResponse(BaseModel):
     teams_count: int
 
     # This is the teams in the pool.
-    teams: List[TeamResponse]
+    teams: List[str]
 
     model_config = ConfigDict(
         from_attributes=True

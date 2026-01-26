@@ -1,6 +1,4 @@
 import pytest
-from app.api.deps import get_current_user, get_current_admin
-from fastapi import HTTPException, status
 
 def test_list_players_ok(client, auth_user):
     response = client.get("/api/v1/players")

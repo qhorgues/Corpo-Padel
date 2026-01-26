@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
-from app.models.models import Pool
+from app.models.models import Match, Pool, Team
 from app.schemas.pool import PoolRequest, PoolResponse, PoolsListResponse
 
 router = APIRouter()
@@ -33,7 +33,7 @@ def get_pool(pool_id: int, db: Session = Depends(get_db), _: str = Depends(get_c
     param : _ - The client.
     return : Return the pool.
     """
-    pool = db.query(Pool).get(pool_id)
+    pool = db.get(Pool, pool_id)
     if not pool:
         raise HTTPException(status_code=404, detail="Pool not found")
     return PoolResponse.model_validate(pool)
@@ -53,11 +53,24 @@ def create_pool(data: PoolRequest, db: Session = Depends(get_db), _: str = Depen
     if len(data.team_ids) != 6:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A pool has 6 teams")
 
-    pool = Pool(**data.model_dump())
+    pool = Pool(name=data.name)
     db.add(pool)
+
+    for team_id in data.team_ids:
+        team = db.get(Team, team_id)
+        if team is None:
+            db.rollback()
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
+        team.pool = pool
+
     db.commit()
     db.refresh(pool)
-    return PoolResponse.model_validate(pool)
+    return PoolResponse(
+        id=pool.id,
+        name=pool.name,
+        teams_count=len(pool.teams),
+        teams=[team.company for team in pool.teams]
+    )
 
 
 
@@ -75,15 +88,35 @@ def update_pool(pool_id: int, data: PoolRequest, db: Session = Depends(get_db), 
     if len(data.team_ids) != 6:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A pool has 6 teams")
     
-    pool = db.query(Pool).get(pool_id)
+    pool = db.get(Pool, pool_id)
     if not pool:
         raise HTTPException(status_code=404, detail="Pool not found")
+    
+    for team in pool.teams:
+        result = db.query(Match).filter(Match.status == "TERMINE").first()
+        if result is not None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A team had already played")
+    
+    pool = Pool(name=data.name)
 
-    for key, value in data.model_dump().items():
-        setattr(pool, key, value)
+    for team_id in pool.teams:
+        team = db.get(Team, team_id)
+        team.pool = None
+
+    for team_id in data.team_ids:
+        team = db.get(Team, team_id)
+        if team is None:
+            db.rollback()
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team not found")
+        team.pool = pool
 
     db.commit()
-    return PoolResponse.model_validate(pool)
+    return PoolResponse(
+        id=pool.id,
+        name=pool.name,
+        teams_count=len(pool.teams),
+        teams=[team.company for team in pool.teams]
+    )
 
 
 
@@ -97,9 +130,14 @@ def delete_pool(pool_id: int, db: Session = Depends(get_db), _: str = Depends(ge
     param : _ - The client.
     return : Return no content
     """
-    pool = db.query(Pool).get(pool_id)
+    pool = db.get(Pool, pool_id)
     if not pool:
         raise HTTPException(status_code=404, detail="Pool not found")
+    
+    for team in pool.teams:
+        result = db.query(Match).filter(Match.status == "TERMINE").first()
+        if result is not None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A team had already played")
 
     db.delete(pool)
     db.commit()
