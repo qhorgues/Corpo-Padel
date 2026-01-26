@@ -33,7 +33,7 @@ def get_team(team_id: int, db: Session = Depends(get_db), _: str = Depends(get_c
     param : _ - The client.
     return : Return the team.
     """
-    team = db.query(Team).get(team_id)
+    team = db.get(Team, team_id)
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
     return TeamResponse.model_validate(team)
@@ -69,7 +69,7 @@ def update_team(team_id: int, data: TeamRequest, db: Session = Depends(get_db), 
     param : _ - The client.
     return : Return the team updated.
     """
-    team = db.query(Team).get(team_id)
+    team = db.get(Team, team_id)
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
 
@@ -91,7 +91,7 @@ def delete_team(team_id: int, db: Session = Depends(get_db), _: str = Depends(ge
     param : _ - The client.
     return : Return no content
     """
-    team = db.query(Team).get(team_id)
+    team = db.get(Team, team_id)
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
 

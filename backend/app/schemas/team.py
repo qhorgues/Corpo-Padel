@@ -1,6 +1,12 @@
 # app/schemas/team.py
 from typing import List
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
+
+
+def not_blank(v: str) -> str:
+    if v is None or not v.strip():
+        raise ValueError("Field cannot be blank")
+    return v
 
 
 class TeamPlayerMini(BaseModel):
@@ -51,11 +57,14 @@ class TeamResponse(BaseModel):
     # This is the team's company name.
     company: str
 
-    # This is the team's players.
-    players: List[TeamPlayerMini]
+    # This is the team's players one.
+    player1: TeamPlayerMini
+
+    # This is the team's players two.
+    player2: TeamPlayerMini
 
     # This is the team's pool.
-    pool: PoolMini
+    pool: PoolMini | None = None
 
     model_config = ConfigDict(
         from_attributes=True
@@ -79,7 +88,14 @@ class TeamRequest(BaseModel):
 
 
     # This is the team's pool id.
-    pool_id: int
+    pool_id: int | None = None
+
+    @field_validator(
+        "company",
+    )
+    @classmethod
+    def validate_not_blank(cls, v):
+        return not_blank(v)
 
     model_config = ConfigDict(
         from_attributes=True
