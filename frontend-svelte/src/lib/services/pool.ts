@@ -52,7 +52,7 @@ export const poolsService = {
    * @return Return all pools.
    */
   getAllPools() {
-    return api.get<{ pools: PoolOutput[] }>('/pools');
+    return api.get<{ pools: PoolOutput[]; total: number }>('/pools');
   },
 
 
