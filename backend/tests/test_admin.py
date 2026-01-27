@@ -39,3 +39,13 @@ def test_reset_password_unauthorized(client, db_session, test_user, auth_none):
     )
 
     assert response.status_code == 401
+
+
+
+def test_reset_password_not_found_player(client, auth_admin, db_session):
+    response = client.post(
+        f"/api/v1/admin/accounts/2/reset-password",
+        headers=auth_admin
+    )
+
+    assert response.status_code == 404

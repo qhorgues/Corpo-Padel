@@ -1,5 +1,6 @@
 import pytest
 from datetime import date, timedelta
+from app.models.models import Event
 
 def valid_match(team1_id, team2_id, court=1):
     return {
@@ -34,6 +35,14 @@ def test_list_events_ok(client, auth_user):
 def test_list_events_unauthorized(client, auth_none):
     res = client.get("/api/v1/events")
     assert res.status_code == 401
+
+
+
+def test_get_event_ok(client, auth_user, event):
+    res = client.get(f"/api/v1/events/{event.id}")
+    assert res.status_code == 200
+    assert res.json()["event_date"] == event.event_date.isoformat()
+    assert len(res.json()["matches"]) == len(event.matches)
 
 
 

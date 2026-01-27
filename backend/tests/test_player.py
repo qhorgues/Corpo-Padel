@@ -28,6 +28,12 @@ def test_get_player_ok(client, db_session, auth_user):
 
 
 
+def test_get_player_not_found(client, db_session, auth_user):
+    response = client.get(f"/api/v1/players/2")
+    assert response.status_code == 404
+
+
+
 def test_create_player_ok(client, auth_admin):
     payload = {
         "first_name": "Jane",
@@ -183,3 +189,82 @@ def test_missing_required_role(client, auth_admin):
 
     response = client.post("/api/v1/players", json=payload)
     assert response.status_code in (400, 422)
+
+
+
+def test_update_player_ok(client, db_session, auth_admin, test_user):
+    payload = {
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "company": "ACME",
+        "license_number": "L654321",
+        "email": "jane@test.com",
+        "password": "ValidP@ssw0rd123",
+        "role": "JOUEUR"
+    }
+
+    from app.models.models import Player
+    player = db_session.query(Player).filter(Player.user_id == test_user.id).first()
+
+    response = client.put(f"/api/v1/players/{player.id}", json=payload)
+    assert response.status_code == 200
+    assert response.json()["first_name"] == "Jane"
+
+
+
+def test_update_player_duplicate_email_and_license(client, auth_admin):
+    payload = {
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "company": "ACME",
+        "license_number": "L654321",
+        "email": "jane@test.com",
+        "password": "ValidP@ssw0rd123",
+        "role": "JOUEUR"
+    }
+
+    payload2 = {
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "company": "ACME",
+        "license_number": "L654322",
+        "email": "jane@test2.com",
+        "password": "ValidP@ssw0rd123",
+        "role": "JOUEUR"
+    }
+
+    response = client.post("/api/v1/players", json=payload)
+    response = client.post("/api/v1/players", json=payload2)
+    response = client.put(f"/api/v1/players/{response.json()["id"]}", json=payload)
+    assert response.status_code == 400
+
+
+
+def test_update_player_not_found(client, auth_admin):
+    payload = {
+        "first_name": "Jane",
+        "last_name": "Doe",
+        "company": "ACME",
+        "license_number": "L111111",
+        "email": "x@test.com",
+        "password": "ValidP@ssw0rd123",
+        "role": "JOUEUR"
+    }
+
+    response = client.put(f"/api/v1/players/2", json=payload)
+    assert response.status_code == 404
+
+
+
+def test_delete_user_ok(client, db_session, auth_admin, test_user):
+    from app.models.models import Player
+    player = db_session.query(Player).filter(Player.user_id == test_user.id).first()
+
+    response = client.delete(f"/api/v1/players/{player.id}")
+    assert response.status_code == 204
+
+
+
+def test_delete_user_non_found(client, auth_admin):
+    response = client.delete(f"/api/v1/players/2")
+    assert response.status_code == 404
