@@ -1,26 +1,52 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from datetime import date
 
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
-from app.models.models import Event, Match, Team
+from app.models.models import Event, Match, Player, Team
 from app.schemas.event import EventRequest, EventResponse, EventsListResponse, MatchMini
 
 router = APIRouter()
 
 
 @router.get("", response_model=EventsListResponse)
-def list_events(db: Session = Depends(get_db), _: str = Depends(get_current_user)):
+def list_events(
+    start_date: date | None = Query(None),
+    end_date: date | None = Query(None),
+    mine: bool | None = Query(None),
+    db: Session = Depends(get_db), 
+    user: str = Depends(get_current_user)):
     """
     This function gets all the events.
 
+    param : start_date - When to start to get the date.
+    param : end_date - When to stope to get the date.
+    param : mine - Show only my event.
     param : db - The database.
     param : _ - The client.
     return : Return all the events.
     """
     events = db.query(Event).all()
+
+    if start_date is not None:
+        events = events.filter(Event.event_date >= start_date)
+
+    if end_date is not None:
+        events = events.filter(Event.event_date <= end_date)
+
+    if mine:
+        player = db.query(Player).filter(Player.user_id == user.id).first()
+
+        query = query.join(Event.matches).join(
+            Team,
+            (Team.id == Match.team1_id) | (Team.id == Match.team2_id)
+        ).filter(
+            (Team.player1_id == player.id) |
+            (Team.player2_id == player.id)
+        ).distinct()
+
     return EventsListResponse(events=events, total=len(events))
 
 
