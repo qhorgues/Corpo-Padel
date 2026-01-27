@@ -68,20 +68,23 @@ class ProfilePlayerRequest(BaseModel):
     This class show the profile of a player REQUET VERSION.
     """
 
+    # The user's mail.
+    email: EmailStr | None = None
+
     # The player's first name.
-    first_name: str
+    first_name: Optional[str]
 
 
     # The player's last name.
-    last_name: str
+    last_name: Optional[str]
 
 
     # The player's company name.
-    company: str
+    company: Optional[str]
 
 
     # The player's license.
-    license_number: str
+    license_number: Optional[str]
 
 
     # The player's birth date.

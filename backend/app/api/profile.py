@@ -57,6 +57,8 @@ def update_profile(data: ProfilePlayerRequest, db: Session = Depends(get_db), cu
     player.license_number = data.license_number
     player.birth_date = data.birth_date
     player.photo_url = data.photo_url
+    if data.email is not None:
+        player.user.email = data.email
 
     db.commit()
     db.refresh(player)
