@@ -3,7 +3,7 @@ import api from './api'
 /**
  * This is the enumeration about the role.
  */
-enum Role {
+export enum Role {
   JOUEUR = "JOUEUR",
   ADMINISTRATEUR = "ADMINISTRATEUR"
 }
