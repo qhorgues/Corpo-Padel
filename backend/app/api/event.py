@@ -25,7 +25,7 @@ def list_events(
     param : end_date - When to stope to get the date.
     param : mine - Show only my event.
     param : db - The database.
-    param : _ - The client.
+    param : user - The client.
     return : Return all the events.
     """
     events = db.query(Event)

@@ -1,4 +1,6 @@
+from ast import For
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -80,7 +82,7 @@ def update_team(team_id: int, data: TeamRequest, db: Session = Depends(get_db), 
     param : _ - The client.
     return : Return the team updated.
     """
-    query = db.query(Match).filter(Match.team1_id == team_id or Match.team2_id == team_id).first()
+    query = db.query(Match).filter(or_(Match.team1_id == team_id, Match.team2_id == team_id)).first()
     if query is not None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The team had already played")
     
@@ -106,7 +108,7 @@ def delete_team(team_id: int, db: Session = Depends(get_db), _: str = Depends(ge
     param : _ - The client.
     return : Return no content
     """
-    query = db.query(Match).filter(Match.team1_id == team_id or Match.team2_id == team_id).first()
+    query = db.query(Match).filter(or_(Match.team1_id == team_id, Match.team2_id == team_id)).first()
     if query is not None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The team had already played")
     
