@@ -18,6 +18,11 @@ export interface PoolOutput {
    * Number of teams.
    */
   teams_count: number;
+
+  /**
+   * Name of teams.
+   */
+  teams: string[]
 }
 
 

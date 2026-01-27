@@ -54,9 +54,14 @@ export interface TeamOutput {
   company: string;
 
   /**
-   * Team players.
+   * The first player.
    */
-  players: TeamPlayerOutput[];
+  player1: TeamPlayerOutput;
+
+  /**
+   * The second player.
+   */
+  player2: TeamPlayerOutput;
 
   /**
    * Team pool.

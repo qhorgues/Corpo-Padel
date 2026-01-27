@@ -25,8 +25,8 @@ export interface MatchOutput {
    * Event information.
    */
   event: {
-    date: string;
-    time: string;
+    event_date: string;
+    event_time: string;
   };
 
   /**
@@ -66,6 +66,11 @@ export interface MatchOutput {
  * This interface represents a match update request.
  */
 export interface MatchInput {
+  /**
+   * Court number.
+   */
+  court_number: number;
+  
   /**
    * Match status.
    */
