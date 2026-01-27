@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -10,15 +10,26 @@ router = APIRouter()
 
 
 @router.get("", response_model=TeamsListResponse)
-def list_teams(db: Session = Depends(get_db), _: str = Depends(get_current_user)):
+def list_teams(pool_id: int | None = Query(None), company: str | None = Query(None), db: Session = Depends(get_db), _: str = Depends(get_current_user)):
     """
     This function gets all the teams.
 
+    param : pool_id - The team's pool id.
+    param : company - The team's company name.
     param : db - The database.
     param : _ - The client.
     return : Return all the teams.
     """
-    teams = db.query(Team).all()
+    teams = db.query(Team)
+
+    if pool_id is not None:
+        teams = teams.filter(Team.pool_id == pool_id)
+
+    if company is not None:
+        teams = teams.filter(Team.company == company)
+
+    teams = teams.all()
+
     return TeamsListResponse(teams=teams, total=len(teams))
 
 

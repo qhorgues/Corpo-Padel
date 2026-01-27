@@ -28,7 +28,7 @@ def list_events(
     param : _ - The client.
     return : Return all the events.
     """
-    events = db.query(Event).all()
+    events = db.query(Event)
 
     if start_date is not None:
         events = events.filter(Event.event_date >= start_date)
@@ -46,6 +46,8 @@ def list_events(
             (Team.player1_id == player.id) |
             (Team.player2_id == player.id)
         ).distinct()
+
+    events = events.all()
 
     return EventsListResponse(events=events, total=len(events))
 
