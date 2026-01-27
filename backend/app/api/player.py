@@ -110,7 +110,7 @@ def update_player(player_id: int, data: PlayerRequest, db: Session = Depends(get
 
     if not player:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Player not found",
         )
 
