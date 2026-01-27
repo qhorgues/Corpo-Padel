@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
-from app.models.models import Team
+from app.models.models import Match, Team
 from app.schemas.team import TeamRequest, TeamResponse, TeamsListResponse
 
 router = APIRouter()
@@ -80,6 +80,10 @@ def update_team(team_id: int, data: TeamRequest, db: Session = Depends(get_db), 
     param : _ - The client.
     return : Return the team updated.
     """
+    query = db.query(Match).filter(Match.team1_id == team_id or Match.team2_id == team_id).first()
+    if query is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The team had already played")
+    
     team = db.get(Team, team_id)
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
@@ -102,6 +106,10 @@ def delete_team(team_id: int, db: Session = Depends(get_db), _: str = Depends(ge
     param : _ - The client.
     return : Return no content
     """
+    query = db.query(Match).filter(Match.team1_id == team_id or Match.team2_id == team_id).first()
+    if query is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The team had already played")
+    
     team = db.get(Team, team_id)
     if not team:
         raise HTTPException(status_code=404, detail="Team not found")
