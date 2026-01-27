@@ -70,7 +70,7 @@ export interface MatchInput {
    * Court number.
    */
   court_number: number;
-  
+
   /**
    * Match status.
    */
@@ -116,6 +116,18 @@ export const matchesService = {
     return api.get<{ matches: MatchOutput[]; total: number }>('/matches', {
       params
     });
+  },
+
+
+
+  /**
+   * This function creates a match.
+   * 
+   * @param input Match informations.
+   * @return Return the created match.
+   */
+  createMatch(input: MatchInput) {
+    return api.post<MatchOutput>(`/matches`, input);
   },
 
 
