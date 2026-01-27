@@ -1,8 +1,23 @@
 # app/schemas/match.py
+from datetime import datetime, time
 from enum import Enum
 from typing import Optional, List
 from pydantic import BaseModel, ConfigDict
 from .team import TeamResponse
+
+class EventMini(BaseModel):
+    """
+    This is a soft version of a event.
+    """
+    # The date of the event.
+    event_date: datetime
+
+    # The time of the event.
+    event_time: time
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
 
 class MatchStatus(str, Enum):
@@ -28,6 +43,9 @@ class MatchResponse(BaseModel):
 
     # This is the match's id.
     id: int
+
+    # This is the event of the match.
+    event: EventMini
 
     # This is the match's court.
     court_number: int
