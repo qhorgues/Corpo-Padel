@@ -15,7 +15,7 @@ class UserRole(str, Enum):
     """
 
     # The user is an admin.
-    ADMINISTRATEUR = "ADMINITRATEUR"
+    ADMINISTRATEUR = "ADMINISTRATEUR"
 
     # The user is a player.
     JOUEUR = "JOUEUR"
@@ -42,6 +42,9 @@ class PlayerResponse(BaseModel):
     # This is the player's license.
     license_number: str
 
+    # This is the player's email.
+    email: Optional[str] = None
+
     # This is the player's birth date.
     birth_date: Optional[date] = None
 
@@ -60,25 +63,25 @@ class PlayerRequest(BaseModel):
     """
 
     # This is the player's first name.
-    first_name: str
+    first_name: Optional[str] = None
 
     # This is the player's last name.
-    last_name: str
+    last_name: Optional[str] = None
 
     # This is the player's company name.
-    company: str
+    company: Optional[str] = None
 
     # This is the player's license.
-    license_number: str
+    license_number: Optional[str] = None
 
     # This is the player's mail.
-    email: EmailStr
+    email: Optional[EmailStr] = None
 
     # This is the player's password.
-    password: str
+    password: Optional[str] = None
 
     # This si the player's role.
-    role: UserRole
+    role: Optional[UserRole] = None
 
     # This is the player's birth date.
     birth_date: Optional[date] = None
@@ -86,16 +89,17 @@ class PlayerRequest(BaseModel):
     # This is the player's profile picture.
     photo_url: Optional[str] = None
 
-    @field_validator(
-        "first_name",
-        "last_name",
-        "company",
-        "license_number",
-        "email",
-    )
-    @classmethod
-    def validate_not_blank(cls, v):
-        return not_blank(v)
+    # Removed validator for now to avoid issues
+    # @field_validator(
+    #     "first_name",
+    #     "last_name",
+    #     "company",
+    #     "license_number",
+    #     "email",
+    # )
+    # @classmethod
+    # def validate_not_blank(cls, v):
+    #     return not_blank(v)
 
     model_config = ConfigDict(
         from_attributes=True

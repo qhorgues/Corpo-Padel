@@ -5,7 +5,7 @@ from datetime import date
 
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
-from app.models.models import Event, Match, Player, Team
+from app.models.models import Event, Match, Player, Team, User
 from app.schemas.event import EventRequest, EventResponse, EventsListResponse, MatchMini
 
 router = APIRouter()
@@ -54,7 +54,7 @@ def list_events(
 
 
 @router.get("/{event_id}", response_model=EventResponse)
-def get_event(event_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_user)):
+def get_event(event_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     """
     This function gets a specific event.
 
@@ -71,7 +71,7 @@ def get_event(event_id: int, db: Session = Depends(get_db), _: str = Depends(get
 
 
 @router.post("", response_model=EventResponse, status_code=status.HTTP_201_CREATED)
-def create_event(data: EventRequest, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
+def create_event(data: EventRequest, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
     """
     This function creates a event.
 
@@ -139,7 +139,7 @@ def create_event(data: EventRequest, db: Session = Depends(get_db), _: str = Dep
 
 
 @router.put("/{event_id}", response_model=EventResponse)
-def update_event(event_id: int, data: EventRequest, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
+def update_event(event_id: int, data: EventRequest, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
     """
     This function updates a event.
     
@@ -210,7 +210,7 @@ def update_event(event_id: int, data: EventRequest, db: Session = Depends(get_db
 
 
 @router.delete("/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_event(event_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
+def delete_event(event_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
     """
     This function remove a event.
 

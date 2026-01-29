@@ -60,10 +60,10 @@ class MatchResponse(BaseModel):
     status: MatchStatus
 
     # This is the score of the first team.
-    score_team1: Optional[str] = None
+    score_team1: Optional[int] = None
 
     # This is the score of the second team.
-    score_team2: Optional[str] = None
+    score_team2: Optional[int] = None
 
     model_config = ConfigDict(
         from_attributes=True

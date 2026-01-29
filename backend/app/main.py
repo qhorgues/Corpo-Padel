@@ -43,6 +43,8 @@ app.include_router(profile.router, prefix="/api/v1/profile", tags=["Profile"])
 app.include_router(result.router, prefix="/api/v1/results", tags=["Result"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["Admin"])
 
+print("DEBUG: Routes registered successfully")  # DEBUG
+
 @app.get("/")
 def read_root():
     return {"message": "Bienvenue sur l'API Corpo Padel", "version": "1.0.0"}

@@ -16,9 +16,12 @@ def get_current_user(
     db: Session = Depends(get_db)
 ) -> User:
     """Récupère l'utilisateur actuel depuis le token JWT"""
+    print("DEBUG: get_current_user called")
     
     token = credentials.credentials
+    print(f"DEBUG: token = {token[:20]}...")
     payload = decode_token(token)
+    print(f"DEBUG: payload = {payload}")
     
     if payload is None:
         raise HTTPException(

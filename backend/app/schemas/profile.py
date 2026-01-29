@@ -72,27 +72,27 @@ class ProfilePlayerRequest(BaseModel):
     email: EmailStr | None = None
 
     # The player's first name.
-    first_name: Optional[str]
+    first_name: Optional[str] = None
 
 
     # The player's last name.
-    last_name: Optional[str]
+    last_name: Optional[str] = None
 
 
     # The player's company name.
-    company: Optional[str]
+    company: Optional[str] = None
 
 
     # The player's license.
-    license_number: Optional[str]
+    license_number: Optional[str] = None
 
 
     # The player's birth date.
-    birth_date: Optional[date]
+    birth_date: Optional[date] = None
 
 
     # The player's profile picture.
-    photo_url: Optional[str]
+    photo_url: Optional[str] = None
 
     model_config = ConfigDict(
         from_attributes=True

@@ -1,11 +1,11 @@
 from datetime import date, time, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
-from app.models.models import Event, Match, Player, Team
+from app.models.models import Event, Match, Player, Team, User
 from app.schemas.match import MatchRequest, MatchResponse, MatchStatus, MatchesListResponse
 
 router = APIRouter()
@@ -24,7 +24,15 @@ def list_matches(upcoming : bool | None = Query(None), team_id : int | None = Qu
     param : user - The client.
     return : Return all the matchs.
     """
-    matches = db.query(Match)
+    matches = db.query(Match).options(
+        joinedload(Match.event),
+        joinedload(Match.team1).joinedload(Team.player1),
+        joinedload(Match.team1).joinedload(Team.player2),
+        joinedload(Match.team1).joinedload(Team.pool),
+        joinedload(Match.team2).joinedload(Team.player1),
+        joinedload(Match.team2).joinedload(Team.player2),
+        joinedload(Match.team2).joinedload(Team.pool)
+    )
 
     if upcoming:
         today = date.today()
@@ -57,7 +65,7 @@ def list_matches(upcoming : bool | None = Query(None), team_id : int | None = Qu
 
 
 @router.get("/{match_id}", response_model=MatchResponse)
-def get_match(match_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_user)):
+def get_match(match_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     """
     This function gets a specific match.
 
@@ -74,7 +82,7 @@ def get_match(match_id: int, db: Session = Depends(get_db), _: str = Depends(get
 
 
 @router.post("", response_model=MatchResponse, status_code=status.HTTP_201_CREATED)
-def create_match(data: MatchRequest, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
+def create_match(data: MatchRequest, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
     """
     This function creates a match.
 
@@ -119,7 +127,7 @@ def create_match(data: MatchRequest, db: Session = Depends(get_db), _: str = Dep
 
 
 @router.put("/{match_id}", response_model=MatchResponse)
-def update_match(match_id: int, data: MatchRequest, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
+def update_match(match_id: int, data: MatchRequest, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
     """
     This function updates a match.
     
@@ -164,7 +172,7 @@ def update_match(match_id: int, data: MatchRequest, db: Session = Depends(get_db
 
 
 @router.delete("/{match_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_match(match_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
+def delete_match(match_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
     """
     This function remove a match.
 
