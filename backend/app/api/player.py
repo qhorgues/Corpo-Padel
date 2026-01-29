@@ -154,5 +154,6 @@ def delete_player(player_id: int, db: Session = Depends(get_db), _: str = Depend
             detail="Player not found",
         )
 
+    db.delete(player.user)
     db.delete(player)
     db.commit()
