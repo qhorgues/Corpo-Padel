@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.sql import func
 from app.core.config import settings
 
 engine = create_engine(
@@ -22,7 +22,7 @@ def get_db():
 
 def init_db():
     """Initialise la base de données avec un admin par défaut"""
-    from app.models.models import User, Base
+    from app.models.models import User, Player, Base
     from app.core.security import get_password_hash
     
     Base.metadata.create_all(bind=engine)
@@ -36,9 +36,19 @@ def init_db():
                 email="admin@padel.com",
                 password_hash=get_password_hash("Admin@2025!"),
                 role="ADMINISTRATEUR",
-                is_active=True
+                must_change_password=False
             )
             db.add(admin)
+            player = Player(
+                last_name="Admin",
+                first_name="Admin",
+                company="Admin",
+                license_number="L000000",
+                birth_date=func.current_date(),
+                photo_url="Admin",
+                user=admin
+            )
+            db.add(player)
             db.commit()
             print("✅ Admin créé : admin@padel.com / Admin@2025!")
         else:

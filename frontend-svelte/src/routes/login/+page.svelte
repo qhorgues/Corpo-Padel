@@ -3,6 +3,7 @@
     import { authStore } from "$lib/store/auth";
     import { goto } from "$app/navigation";
     import { writable } from "svelte/store";
+    import { get } from "svelte/store";
 
     const email = writable("");
     const password = writable("");
@@ -17,26 +18,22 @@
         attemptsRemaining.set(null);
         minutesRemaining.set(null);
 
-        try {
-            // On utilise directement le store pour se connecter
-            await authStore.login($email, $password);
-            // Redirection après succès
-            goto("/");
-        } catch (err: any) {
-            console.error(err);
-            errorMessage.set(err?.message || "Erreur de connexion");
-            // Exemple : tu peux adapter si ton API renvoie ces infos
-            attemptsRemaining.set(err?.attemptsRemaining ?? null);
-            minutesRemaining.set(err?.minutesRemaining ?? null);
-        } finally {
-            loading.set(false);
+        const result = await authStore.login($email, $password)
+
+        if (result.success && $authStore.isAuthenticated) {
+            goto('/');
+        } else {
+            errorMessage.set(result.error || 'Erreur de connexion');
+            attemptsRemaining.set(result.attemptsRemaining ?? null);
+            minutesRemaining.set(result.minutesRemaining ?? null);
         }
+
+        loading.set(false);
     };
 </script>
 
 <div
-    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100"
->
+    class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
     <div class="w-full max-w-md">
         <div class="bg-white rounded-lg shadow-2xl p-8">
             <!-- Header -->
