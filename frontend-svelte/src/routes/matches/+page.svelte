@@ -4,7 +4,10 @@ FICHIER : src/routes/matches/+page.svelte
 
 <script lang="ts">
     import { authStore } from "$lib/store/auth.js";
-    import matchesData from "$lib/data/matches-data.json";
+    import { matchesService, type MatchOutput, Status } from "$lib/services/match";
+    import { teamsService, type TeamOutput } from "$lib/services/team";
+    import { poolsService, type PoolOutput } from "$lib/services/pool";
+    import { onMount } from "svelte";
 
     // Types
     type Player = {
@@ -49,6 +52,7 @@ FICHIER : src/routes/matches/+page.svelte
     let userTeams: number[] = []; // IDs des équipes de l'utilisateur
     let allCompanies: string[] = [];
     let allPools: string[] = [];
+    let loading = true;
 
     // Filtres
     let showAllMatches: boolean = false; // Pour les joueurs
@@ -61,10 +65,15 @@ FICHIER : src/routes/matches/+page.svelte
     let editMode: boolean = false;
     let currentMatch: Match | null = null;
 
+    // Obtenir la date et l'heure actuelles
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
     // Formulaire
     let formData: FormData = {
-        date: "",
-        time: "",
+        date: today,
+        time: currentTime,
         court_number: 1,
         team1_id: "",
         team2_id: "",
@@ -78,24 +87,101 @@ FICHIER : src/routes/matches/+page.svelte
     let showDeleteModal: boolean = false;
     let matchToDelete: Match | null = null;
 
-    // Charger les données directement depuis l'import JSON
-    matches = matchesData.matches;
-    userTeams = matchesData.user_teams || [];
+    // Charger les données depuis le backend
+    onMount(async () => {
+        await loadData();
+    });
 
-    // Extraire les entreprises et poules uniques
-    allCompanies = [
-        ...new Set(
-            matches.flatMap((m) => [
-                m.team1.company,
-                m.team2.company,
-            ]),
-        ),
-    ].sort();
-    allPools = [...new Set(matches.map((m) => m.pool))].sort();
+    async function loadData() {
+        loading = true;
+        try {
+            // Récupérer les matchs à venir (30 prochains jours)
+            const matchesResponse = await matchesService.getAllMatches({ upcoming: true });
+            const backendMatches: MatchOutput[] = matchesResponse.data.matches;
 
-    // Créer la liste des équipes
+            // Récupérer toutes les équipes
+            const teamsResponse = await teamsService.getAllTeams();
+            const backendTeams: TeamOutput[] = teamsResponse.data.teams;
+
+            // Récupérer toutes les poules
+            const poolsResponse = await poolsService.getAllPools();
+            const backendPools: PoolOutput[] = poolsResponse.data.pools;
+
+            // Construire la liste des équipes pour les selects
+            teams = backendTeams.map(t => ({
+                id: t.id,
+                company: t.company
+            }));
+
+            // Transformer les matchs du backend au format de l'UI
+            matches = backendMatches.map(match => ({
+                match_id: match.id,
+                date: match.event.event_date,
+                time: match.event.event_time,
+                court_number: match.court_number,
+                status: match.status,
+                team1: {
+                    team_id: match.team1.id,
+                    company: match.team1.company,
+                    players: [
+                        {
+                            player_id: match.team1.player1.id,
+                            first_name: match.team1.player1.first_name,
+                            last_name: match.team1.player1.last_name
+                        },
+                        {
+                            player_id: match.team1.player2.id,
+                            first_name: match.team1.player2.first_name,
+                            last_name: match.team1.player2.last_name
+                        }
+                    ]
+                },
+                team2: {
+                    team_id: match.team2.id,
+                    company: match.team2.company,
+                    players: [
+                        {
+                            player_id: match.team2.player1.id,
+                            first_name: match.team2.player1.first_name,
+                            last_name: match.team2.player1.last_name
+                        },
+                        {
+                            player_id: match.team2.player2.id,
+                            first_name: match.team2.player2.first_name,
+                            last_name: match.team2.player2.last_name
+                        }
+                    ]
+                },
+                pool: match.team1.pool.name // Les deux équipes ont la même poule
+            }));
+
+            // Extraire les entreprises et poules uniques
+            allCompanies = [
+                ...new Set(
+                    matches.flatMap((m) => [
+                        m.team1.company,
+                        m.team2.company,
+                    ]),
+                ),
+            ].sort();
+            allPools = backendPools.map(p => p.name).sort();
+
+            // TODO: Récupérer les équipes de l'utilisateur connecté
+            userTeams = [];
+
+        } catch (error) {
+            console.error("Erreur lors du chargement des données:", error);
+            alert("Erreur lors du chargement des données");
+        } finally {
+            loading = false;
+        }
+    }
+
+    // Créer la liste des équipes (fonction plus utilisée avec nouveau code)
     const teamMap = new Map<number, TeamOption>();
-    matches.forEach((m) => {
+    $: {
+        teamMap.clear();
+        matches.forEach((m) => {
         if (!teamMap.has(m.team1.team_id)) {
             teamMap.set(m.team1.team_id, {
                 id: m.team1.team_id,
@@ -109,9 +195,7 @@ FICHIER : src/routes/matches/+page.svelte
             });
         }
     });
-    teams = Array.from(teamMap.values()).sort((a, b) =>
-        a.company.localeCompare(b.company),
-    );
+    }
 
     // Filtrer les matchs selon le rôle et les filtres actifs
     $: filteredMatches = matches.filter((match: Match) => {
@@ -198,9 +282,12 @@ FICHIER : src/routes/matches/+page.svelte
     function openAddModal(): void {
         editMode = false;
         currentMatch = null;
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         formData = {
-            date: "",
-            time: "",
+            date: today,
+            time: currentTime,
             court_number: 1,
             team1_id: "",
             team2_id: "",
@@ -246,7 +333,7 @@ FICHIER : src/routes/matches/+page.svelte
     }
 
     // Sauvegarder un match
-    function saveMatch(): void {
+    async function saveMatch() {
         // Validation de la date (>= aujourd'hui)
         const today = new Date().toISOString().split("T")[0];
         if (formData.date < today) {
@@ -268,65 +355,29 @@ FICHIER : src/routes/matches/+page.svelte
             return;
         }
 
-        if (editMode && currentMatch) {
-            // Modifier le match existant
-            const index = matches.findIndex(
-                (m) => m.match_id === currentMatch!.match_id,
-            );
-            if (index !== -1) {
-                const team1 = teams.find((t) => t.id === Number(formData.team1_id));
-                const team2 = teams.find((t) => t.id === Number(formData.team2_id));
+        try {
+            const matchInput = {
+                court_number: formData.court_number,
+                status: formData.status,
+                team1_id: Number(formData.team1_id),
+                team2_id: Number(formData.team2_id)
+            };
 
-                if (team1 && team2) {
-                    matches[index] = {
-                        ...matches[index],
-                        date: formData.date,
-                        time: formData.time,
-                        court_number: formData.court_number,
-                        status: formData.status,
-                        team1: {
-                            ...matches[index].team1,
-                            team_id: Number(formData.team1_id),
-                            company: team1.company,
-                        },
-                        team2: {
-                            ...matches[index].team2,
-                            team_id: Number(formData.team2_id),
-                            company: team2.company,
-                        },
-                    };
-                }
+            if (editMode && currentMatch) {
+                // Modifier le match existant
+                await matchesService.updateMatch(currentMatch.match_id, matchInput);
+            } else {
+                // Ajouter un nouveau match
+                await matchesService.createMatch(matchInput);
             }
-        } else {
-            // Ajouter un nouveau match
-            const team1 = teams.find((t) => t.id === Number(formData.team1_id));
-            const team2 = teams.find((t) => t.id === Number(formData.team2_id));
 
-            if (team1 && team2) {
-                const newMatch: Match = {
-                    match_id: Math.max(...matches.map((m) => m.match_id), 0) + 1,
-                    date: formData.date,
-                    time: formData.time,
-                    court_number: formData.court_number,
-                    status: formData.status,
-                    team1: {
-                        team_id: Number(formData.team1_id),
-                        company: team1.company,
-                        players: [], // À compléter avec les vrais joueurs
-                    },
-                    team2: {
-                        team_id: Number(formData.team2_id),
-                        company: team2.company,
-                        players: [], // À compléter avec les vrais joueurs
-                    },
-                    pool: "Poule A", // À définir selon la logique métier
-                };
-
-                matches = [...matches, newMatch];
-            }
+            // Recharger les données
+            await loadData();
+            showModal = false;
+        } catch (error) {
+            console.error("Erreur lors de la sauvegarde:", error);
+            alert("Erreur lors de la sauvegarde du match");
         }
-
-        showModal = false;
     }
 
     // Supprimer un match
@@ -341,7 +392,12 @@ FICHIER : src/routes/matches/+page.svelte
 
     function deleteMatch(): void {
         if (matchToDelete) {
-            matches = matches.filter((m) => m.match_id !== matchToDelete!.match_id);
+            matchesService.deleteMatch(matchToDelete.match_id)
+                .then(() => loadData())
+                .catch((error) => {
+                    console.error("Erreur lors de la suppression:", error);
+                    alert("Erreur lors de la suppression du match");
+                });
             showDeleteModal = false;
             matchToDelete = null;
         }

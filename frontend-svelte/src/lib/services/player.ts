@@ -40,6 +40,11 @@ export interface PlayerOutput {
   license_number: string;
 
   /**
+   * This is the player's email.
+   */
+  email?: string;
+
+  /**
    * This is the player's birth date.
    */
   birth_date?: string;

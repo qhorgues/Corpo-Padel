@@ -1,8 +1,29 @@
-<script>
+<script lang="ts">
     import { authStore } from "$lib/store/auth.js";
-    import profile from "$lib/data/profile_test.json"; 
+    import { profileService, type ProfileOutput } from "$lib/services/profile";
     import Page from "../+page.svelte";
     import { goto } from '$app/navigation';
+    import { onMount } from 'svelte';
+
+    let profile: ProfileOutput | null = null;
+    let loading = true;
+
+    onMount(async () => {
+        await loadProfile();
+    });
+
+    async function loadProfile() {
+        loading = true;
+        try {
+            const response = await profileService.getMyProfile();
+            profile = response.data;
+        } catch (error) {
+            console.error("Erreur lors du chargement du profil:", error);
+            alert("Erreur lors du chargement du profil");
+        } finally {
+            loading = false;
+        }
+    }
 </script>
 
 <div class="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100">
@@ -22,6 +43,13 @@
                 </a>
             </div>
         {:else}
+            {#if loading}
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <div class="flex flex-col items-center gap-6 p-7 rounded-2xl">
+                        <p class="text-gray-600">Chargement...</p>
+                    </div>
+                </div>
+            {:else if profile}
             <div class="bg-white rounded-2xl shadow-xl p-8">
                 <div class="flex flex-col items-center gap-6 p-7 rounded-2xl">
                     <h1 class="text-2xl font-semibold text-gray-800">Profil utilisateur</h1>
@@ -38,7 +66,9 @@
                     <div class="w-full max-w-2xl space-y-3">
                         <p class="text-lg"><strong>Nom :</strong> {profile.player.last_name}</p>
                         <p class="text-lg"><strong>Prénom :</strong> {profile.player.first_name}</p>
-                        <p class="text-lg"><strong>Date de naissance :</strong> {new Date(profile.player.birth_date).toLocaleDateString('fr-FR')}</p>
+                        {#if profile.player.birth_date}
+                            <p class="text-lg"><strong>Date de naissance :</strong> {new Date(profile.player.birth_date).toLocaleDateString('fr-FR')}</p>
+                        {/if}
                         <p class="text-lg"><strong>Email :</strong> {profile.user.email}</p>
                         <p class="text-lg"><strong>Entreprise :</strong> {profile.player.company}</p>
                         <p class="text-lg"><strong>Numéro de licence :</strong> {profile.player.license_number}</p>
@@ -53,6 +83,13 @@
                     </div>
                 </div>
             </div>
+            {:else}
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <div class="flex flex-col items-center gap-6 p-7 rounded-2xl">
+                        <p class="text-red-600">Erreur lors du chargement du profil</p>
+                    </div>
+                </div>
+            {/if}
         {/if}
     </div>
 </div>

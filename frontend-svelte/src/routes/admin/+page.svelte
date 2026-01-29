@@ -2,13 +2,34 @@
 FICHIER : src/routes/HomePage.svelte
 ============================================ -->
 
-<script>
+<script lang="ts">
     import { authStore } from "$lib/store/auth.js";
-    import admin from "$lib/data/admin_test.json"; 
+    import { playersService, type PlayerOutput, type PlayerInput, Role } from "$lib/services/player";
+    import { onMount } from "svelte";
     
     let showModal = false;
     let currentUser = null;
     let isEditMode = false;
+    let players = [];
+    let loading = true;
+    
+    // Charger les données depuis le backend
+    onMount(async () => {
+        await loadPlayers();
+    });
+
+    async function loadPlayers() {
+        loading = true;
+        try {
+            const response = await playersService.getAllPlayers();
+            players = response.data.players;
+        } catch (error) {
+            console.error("Erreur lors du chargement des joueurs:", error);
+            alert("Erreur lors du chargement des joueurs");
+        } finally {
+            loading = false;
+        }
+    }
     
     // Validation states
     let validation = {
@@ -105,7 +126,7 @@ FICHIER : src/routes/HomePage.svelte
         currentUser = null;
     }
     
-    function saveUser() {
+    async function saveUser() {
         // Check all fields are valid
         const allValid = Object.values(validation).every(v => v.valid);
         if (!allValid) {
@@ -113,8 +134,29 @@ FICHIER : src/routes/HomePage.svelte
             return;
         }
         
-        console.log(isEditMode ? "Modification" : "Création", currentUser);
-        closeModal();
+        try {
+            const playerInput: PlayerInput = {
+                first_name: currentUser.first_name,
+                last_name: currentUser.last_name,
+                company: currentUser.company,
+                license_number: currentUser.license_number,
+                email: currentUser.email,
+                password: "TempPassword123!", // Mot de passe temporaire
+                role: Role.JOUEUR
+            };
+
+            if (isEditMode) {
+                await playersService.updatePlayer(currentUser.id, playerInput);
+            } else {
+                await playersService.createPlayer(playerInput);
+            }
+
+            await loadPlayers();
+            closeModal();
+        } catch (error) {
+            console.error("Erreur lors de la sauvegarde:", error);
+            alert("Erreur lors de la sauvegarde de l'utilisateur");
+        }
     }
 </script>
 
@@ -160,13 +202,22 @@ FICHIER : src/routes/HomePage.svelte
             </div>
             
             <!-- Lignes de données -->
-            {#each admin.joueurs as joueur, index}
+            {#if loading}
+                <div class="px-8 py-12 text-center text-gray-500">
+                    Chargement...
+                </div>
+            {:else if players.length === 0}
+                <div class="px-8 py-12 text-center text-gray-500">
+                    Aucun joueur trouvé
+                </div>
+            {:else}
+                {#each players as joueur, index}
                 <div class="grid grid-cols-[1fr_1fr_1.5fr_1fr_2fr_auto] gap-6 px-8 py-4 border-b hover:bg-blue-50 transition-colors {index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}">
                     <div class="text-gray-900">{joueur.first_name}</div>
                     <div class="text-gray-900">{joueur.last_name}</div>
                     <div class="text-gray-600">{joueur.company}</div>
                     <div class="text-gray-600">{joueur.license_number}</div>
-                    <div class="text-blue-600 text-sm">{joueur.email}</div>
+                    <div class="text-blue-600 text-sm">{joueur.email || 'N/A'}</div>
                     <div>
                         <button 
                             on:click={() => openEditModal(joueur)}
@@ -177,6 +228,7 @@ FICHIER : src/routes/HomePage.svelte
                     </div>
                 </div>
             {/each}
+            {/if}
         </div>
     </div>
     

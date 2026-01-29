@@ -4,7 +4,9 @@ FICHIER : src/routes/planning/+page.svelte
 
 <script lang="ts">
     import { authStore } from "$lib/store/auth.js";
-    import planningData from "$lib/data/planning-data.json";
+    import { eventsService, type EventOutput, type EventInput } from "$lib/services/event";
+    import { teamsService, type TeamOutput } from "$lib/services/team";
+    import { onMount } from "svelte";
 
     // Types
     type Player = {
@@ -55,9 +57,10 @@ FICHIER : src/routes/planning/+page.svelte
     };
 
     // Données
-    let events: Event[] = planningData.events;
-    let userTeams: number[] = planningData.user_teams || [];
+    let events: Event[] = [];
+    let userTeams: number[] = [];
     let teams: TeamOption[] = [];
+    let loading = true;
 
     // État du calendrier
     let currentDate = new Date();
@@ -76,35 +79,103 @@ FICHIER : src/routes/planning/+page.svelte
     let currentEvent: Event | null = null;
     let eventToDelete: Event | null = null;
 
+    // Obtenir la date et l'heure actuelles
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
     // Formulaire
     let eventForm: EventForm = {
-        date: "",
-        time: "",
+        date: today,
+        time: currentTime,
         match_count: 1,
         matches: [{ court_number: 1, team1_id: "", team2_id: "" }],
     };
 
-    // Extraire la liste des équipes
-    const teamMap = new Map<number, TeamOption>();
-    events.forEach((event) => {
-        event.matches.forEach((match) => {
-            if (!teamMap.has(match.team1.team_id)) {
-                teamMap.set(match.team1.team_id, {
-                    id: match.team1.team_id,
-                    company: match.team1.company,
-                });
-            }
-            if (!teamMap.has(match.team2.team_id)) {
-                teamMap.set(match.team2.team_id, {
-                    id: match.team2.team_id,
-                    company: match.team2.company,
-                });
-            }
-        });
+    // Charger les données depuis le backend
+    onMount(async () => {
+        await loadData();
     });
-    teams = Array.from(teamMap.values()).sort((a, b) =>
-        a.company.localeCompare(b.company),
-    );
+
+    async function loadData() {
+        loading = true;
+        try {
+            // Récupérer les événements
+            const eventsResponse = await eventsService.getAllEvents();
+            const backendEvents: EventOutput[] = eventsResponse.data.events;
+
+            // Récupérer toutes les équipes
+            const teamsResponse = await teamsService.getAllTeams();
+            const backendTeams: TeamOutput[] = teamsResponse.data.teams;
+
+            // Construire la liste des équipes pour les selects
+            teams = backendTeams.map(t => ({
+                id: t.id,
+                company: t.company
+            }));
+
+            // Transformer les événements du backend au format de l'UI
+            events = backendEvents.map(event => ({
+                event_id: event.id,
+                date: event.event_date,
+                time: event.event_time,
+                matches: event.matches.map(match => {
+                    const team1 = backendTeams.find(t => t.id === match.team1_id);
+                    const team2 = backendTeams.find(t => t.id === match.team2_id);
+                    
+                    return {
+                        match_id: match.id,
+                        court_number: match.court_number,
+                        team1: {
+                            team_id: match.team1_id,
+                            company: team1?.company || "Unknown",
+                            players: team1 ? [
+                                {
+                                    player_id: team1.player1.id,
+                                    first_name: team1.player1.first_name,
+                                    last_name: team1.player1.last_name
+                                },
+                                {
+                                    player_id: team1.player2.id,
+                                    first_name: team1.player2.first_name,
+                                    last_name: team1.player2.last_name
+                                }
+                            ] : []
+                        },
+                        team2: {
+                            team_id: match.team2_id,
+                            company: team2?.company || "Unknown",
+                            players: team2 ? [
+                                {
+                                    player_id: team2.player1.id,
+                                    first_name: team2.player1.first_name,
+                                    last_name: team2.player1.last_name
+                                },
+                                {
+                                    player_id: team2.player2.id,
+                                    first_name: team2.player2.first_name,
+                                    last_name: team2.player2.last_name
+                                }
+                            ] : []
+                        },
+                        status: match.status,
+                        score_team1: null,
+                        score_team2: null
+                    };
+                })
+            }));
+
+            // TODO: Récupérer les équipes de l'utilisateur connecté
+            // Pour l'instant, on laisse vide
+            userTeams = [];
+
+        } catch (error) {
+            console.error("Erreur lors du chargement des données:", error);
+            alert("Erreur lors du chargement des données");
+        } finally {
+            loading = false;
+        }
+    }
 
     // Filtrer les événements
     $: filteredEvents = events.filter((event) => {
@@ -231,9 +302,12 @@ FICHIER : src/routes/planning/+page.svelte
     function openAddModal(): void {
         editMode = false;
         currentEvent = null;
+        const today = new Date().toISOString().split('T')[0];
+        const now = new Date();
+        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         eventForm = {
-            date: "",
-            time: "",
+            date: today,
+            time: currentTime,
             match_count: 1,
             matches: [{ court_number: 1, team1_id: "", team2_id: "" }],
         };
@@ -323,83 +397,40 @@ FICHIER : src/routes/planning/+page.svelte
     }
 
     // Sauvegarder l'événement
-    function saveEvent(): void {
+    async function saveEvent() {
         const error = validateEventForm();
         if (error) {
             alert(error);
             return;
         }
 
-        if (editMode && currentEvent) {
-            // Modifier l'événement existant
-            const index = events.findIndex(
-                (e) => e.event_id === currentEvent!.event_id,
-            );
-            if (index !== -1) {
-                events[index] = {
-                    ...events[index],
-                    date: eventForm.date,
-                    time: eventForm.time,
-                    matches: eventForm.matches.map((m, idx) => {
-                        const team1 = teams.find((t) => t.id === Number(m.team1_id));
-                        const team2 = teams.find((t) => t.id === Number(m.team2_id));
-                        const existingMatch = events[index].matches[idx];
-
-                        return {
-                            match_id: existingMatch?.match_id || Date.now() + idx,
-                            court_number: m.court_number,
-                            team1: {
-                                team_id: Number(m.team1_id),
-                                company: team1!.company,
-                                players: [],
-                            },
-                            team2: {
-                                team_id: Number(m.team2_id),
-                                company: team2!.company,
-                                players: [],
-                            },
-                            status: existingMatch?.status || "A_VENIR",
-                            score_team1: existingMatch?.score_team1 || null,
-                            score_team2: existingMatch?.score_team2 || null,
-                        };
-                    }),
-                };
-            }
-        } else {
-            // Ajouter un nouvel événement
-            const newEvent: Event = {
-                event_id:
-                    Math.max(...events.map((e) => e.event_id), 0) + 1,
-                date: eventForm.date,
-                time: eventForm.time,
-                matches: eventForm.matches.map((m, idx) => {
-                    const team1 = teams.find((t) => t.id === Number(m.team1_id));
-                    const team2 = teams.find((t) => t.id === Number(m.team2_id));
-
-                    return {
-                        match_id: Date.now() + idx,
-                        court_number: m.court_number,
-                        team1: {
-                            team_id: Number(m.team1_id),
-                            company: team1!.company,
-                            players: [],
-                        },
-                        team2: {
-                            team_id: Number(m.team2_id),
-                            company: team2!.company,
-                            players: [],
-                        },
-                        status: "A_VENIR",
-                        score_team1: null,
-                        score_team2: null,
-                    };
-                }),
+        try {
+            const eventInput: EventInput = {
+                event_date: eventForm.date,
+                event_time: eventForm.time,
+                matches: eventForm.matches.map(m => ({
+                    court_number: m.court_number,
+                    status: "A_VENIR",
+                    team1_id: Number(m.team1_id),
+                    team2_id: Number(m.team2_id)
+                }))
             };
 
-            events = [...events, newEvent];
-        }
+            if (editMode && currentEvent) {
+                // Modifier l'événement existant
+                await eventsService.updateEvent(currentEvent.event_id, eventInput);
+            } else {
+                // Ajouter un nouvel événement
+                await eventsService.createEvent(eventInput);
+            }
 
-        showAddEditModal = false;
+            // Recharger les données
+            await loadData();
+            showAddEditModal = false;
+        } catch (error) {
+            console.error("Erreur lors de la sauvegarde:", error);
+            alert("Erreur lors de la sauvegarde de l'événement");
+        }
     }
 
     // Confirmer la suppression
@@ -419,11 +450,17 @@ FICHIER : src/routes/planning/+page.svelte
     }
 
     // Supprimer l'événement
-    function deleteEvent(): void {
+    async function deleteEvent() {
         if (eventToDelete) {
-            events = events.filter((e) => e.event_id !== eventToDelete!.event_id);
-            showDeleteModal = false;
-            eventToDelete = null;
+            try {
+                await eventsService.deleteEvent(eventToDelete.event_id);
+                await loadData();
+                showDeleteModal = false;
+                eventToDelete = null;
+            } catch (error) {
+                console.error("Erreur lors de la suppression:", error);
+                alert("Erreur lors de la suppression de l'événement");
+            }
         }
     }
 

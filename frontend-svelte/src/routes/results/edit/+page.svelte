@@ -1,17 +1,76 @@
-<script>
+<script lang="ts">
     import { goto } from '$app/navigation';
-    import profile from "$lib/data/match_test.json";
+    import { profileService, type ProfileOutput, type ProfileInput } from "$lib/services/profile";
+    import { onMount } from 'svelte';
+    
+    let profile: ProfileOutput | null = null;
+    let loading = true;
+    let saving = false;
     
     // Créer une copie éditable
     let editedProfile = {
-        photo_url: profile.player.photo_url,
-        first_name: profile.player.first_name,
-        last_name: profile.player.last_name,
-        birth_date: profile.player.birth_date,
-        email: profile.user.email,
-        company: profile.player.company,
-        license_number: profile.player.license_number
+        photo_url: '',
+        first_name: '',
+        last_name: '',
+        birth_date: '',
+        email: '',
+        company: '',
+        license_number: ''
     };
+
+    onMount(async () => {
+        await loadProfile();
+    });
+
+    async function loadProfile() {
+        loading = true;
+        try {
+            const response = await profileService.getMyProfile();
+            profile = response.data;
+            
+            // Date d'aujourd'hui par défaut si birth_date vide
+            const today = new Date().toISOString().split('T')[0];
+            
+            // Initialiser les champs éditables
+            editedProfile = {
+                photo_url: profile.player.photo_url || '',
+                first_name: profile.player.first_name,
+                last_name: profile.player.last_name,
+                birth_date: profile.player.birth_date || today,
+                email: profile.user.email,
+                company: profile.player.company,
+                license_number: profile.player.license_number
+            };
+        } catch (error) {
+            console.error("Erreur lors du chargement du profil:", error);
+            alert("Erreur lors du chargement du profil");
+        } finally {
+            loading = false;
+        }
+    }
+
+    async function handleSave() {
+        saving = true;
+        try {
+            const profileInput: ProfileInput = {
+                first_name: editedProfile.first_name,
+                last_name: editedProfile.last_name,
+                birth_date: editedProfile.birth_date,
+                email: editedProfile.email,
+                photo_url: editedProfile.photo_url || null
+            };
+
+            await profileService.updateMyProfile(profileInput);
+            alert("Profil mis à jour avec succès");
+            goto('/profile');
+        } catch (error) {
+            console.error("Erreur lors de la sauvegarde:", error);
+            alert("Erreur lors de la sauvegarde du profil");
+        } finally {
+            saving = false;
+        }
+    }
+    
     function handleCancel() {
         goto('/profile');
     }
@@ -19,6 +78,11 @@
 
 <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-8">
     <div class="w-full max-w-2xl">
+        {#if loading}
+            <div class="bg-white rounded-2xl shadow-xl p-8">
+                <p class="text-center text-gray-600">Chargement...</p>
+            </div>
+        {:else}
         <div class="bg-white rounded-2xl shadow-xl p-8">
             <h1 class="text-3xl font-bold mb-6 text-center text-gray-800">Éditer le profil</h1>
                 <!-- PHOTO DE PROFIL -->
@@ -124,19 +188,23 @@
                 <!-- BOUTONS -->
                 <div class="flex gap-4 pt-4">
                     <button 
-                        type="submit"
-                        class="flex-1 p-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors shadow-md"
+                        type="button"
+                        on:click={handleSave}
+                        disabled={saving}
+                        class="flex-1 p-3 bg-green-500 text-white rounded-lg font-semibold hover:bg-green-600 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
-                        Sauvegarder
+                        {saving ? 'Sauvegarde...' : 'Sauvegarder'}
                     </button>
                     <button 
                         type="button"
                         on:click={handleCancel}
-                        class="flex-1 p-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors shadow-md"
+                        disabled={saving}
+                        class="flex-1 p-3 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors shadow-md disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
                         Annuler
                     </button>
                 </div>
         </div>
+        {/if}
     </div>
 </div>

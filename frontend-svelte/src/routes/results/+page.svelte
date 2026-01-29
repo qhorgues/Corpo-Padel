@@ -1,8 +1,36 @@
-<script>
+<script lang="ts">
     import { authStore } from "$lib/store/auth.js";
-    import match from "$lib/data/match_test.json";
-    import ranking from "$lib/data/ranking_test.json";
+    import { resultsService, type ResultOutput, type ResultStatisticsOutput, type Ranking } from "$lib/services/result";
     import { goto } from '$app/navigation';
+    import { onMount } from 'svelte';
+
+    let results: ResultOutput[] = [];
+    let statistics: ResultStatisticsOutput | null = null;
+    let rankings: Ranking[] = [];
+    let loading = true;
+
+    onMount(async () => {
+        await loadData();
+    });
+
+    async function loadData() {
+        loading = true;
+        try {
+            // Récupérer les résultats de l'utilisateur
+            const resultsResponse = await resultsService.getMyResults();
+            results = resultsResponse.data.results;
+            statistics = resultsResponse.data.statistics;
+
+            // Récupérer le classement
+            const rankingsResponse = await resultsService.getRankings();
+            rankings = rankingsResponse.data.rankings;
+        } catch (error) {
+            console.error("Erreur lors du chargement des données:", error);
+            alert("Erreur lors du chargement des données");
+        } finally {
+            loading = false;
+        }
+    }
 </script>
 
 <div class="min-h-screen flex items-center justify-center bg-linear-to-br from-blue-50 to-indigo-100">
@@ -21,19 +49,27 @@
 
         {:else}
 
+            {#if loading}
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <p class="text-center text-gray-600">Chargement...</p>
+                </div>
+            {:else}
             <div class="bg-white rounded-2xl shadow-xl p-8">
                 <div class="flex flex-col items-center gap-6 p-7 rounded-2xl">
                     <h1 class="font-medium text-gray-600 dark:text-gray-400">Matchs les plus récents</h1>
                 </div>
 
                 <div class="flex flex-col items-center gap-6 p-7 rounded-2xl">
-                    {#each match.results as resultat}
+                    {#if results.length === 0}
+                        <p class="text-gray-500">Aucun résultat disponible</p>
+                    {:else}
+                        {#each results as resultat}
                         <div class="w-full max-w-2xl bg-white border border-gray-200 rounded-lg shadow-md p-6">
                             <div class="mb-4">
-                                <h2 class="text-2xl font-semibold mb-2">Match du {resultat.date}</h2>
+                                <h2 class="text-2xl font-semibold mb-2">Match du {new Date(resultat.date).toLocaleDateString('fr-FR')}</h2>
 
                                 <p class="text-gray-600">
-                                    Adversaire: {resultat.opponents.players} ({resultat.opponents.company})
+                                    Adversaire: {resultat.opponents.players.join(', ')} ({resultat.opponents.company})
                                 </p>
 
                                 <p class="text-gray-800 font-semibold">
@@ -55,6 +91,7 @@
 
                         </div>
                     {/each}
+                    {/if}
                 </div>
             </div>
 
@@ -64,7 +101,10 @@
                 </div>
 
                 <div class="flex flex-col items-center gap-6 p-7 rounded-2xl">
-                    {#each ranking.rankings as classement}
+                    {#if rankings.length === 0}
+                        <p class="text-gray-500">Aucun classement disponible</p>
+                    {:else}
+                        {#each rankings as classement}
                         <div class="w-full max-w-2xl bg-white border border-gray-200 rounded-lg shadow-md p-6">
                             <div class="mb-4">
                                 {#if classement.position === 1}
@@ -91,8 +131,10 @@
                             </div>
                         </div>
                     {/each}
+                    {/if}
                 </div>
             </div>
+            {/if}
             
         {/if}
     </div> 
