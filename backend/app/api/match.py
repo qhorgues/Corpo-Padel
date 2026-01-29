@@ -1,6 +1,6 @@
 from datetime import date, time, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, or_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -96,7 +96,12 @@ def create_match(data: MatchRequest, db: Session = Depends(get_db), _: str = Dep
             db.rollback()
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Team not found")
         
-        event = Event(event_date=func.current_date(), event_time=time())
+        event : Event = None
+        if data.event is None:
+            event = Event(event_date=func.current_date(), event_time=time())
+        else:
+            event = Event(event_date=data.event.event_date, event_time=data.event.event_time)
+        
         db.add(event)
 
         match = Match(
@@ -154,6 +159,19 @@ def update_match(match_id: int, data: MatchRequest, db: Session = Depends(get_db
         match.score_team2=data.score_team2
         match.team1=team1
         match.team2=team2
+
+        if data.event is not None:
+            event = db.query(Event).filter(and_(Event.event_date == data.event.event_date, Event.event_time == data.event.event_time)).first()
+            if event is not None:
+                match.event = event
+            else:
+                if len(match.event.matches) == 1:
+                    match.event.event_date = data.event.event_date
+                    match.event.event_time = data.event.event_time
+                else:
+                    event = Event(event_date=data.event.event_date, event_time=data.event.event_time)
+                    db.add(event)
+                    match.event = event
 
         db.commit()
     except:

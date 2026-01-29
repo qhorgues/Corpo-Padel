@@ -82,6 +82,9 @@ class MatchRequest(BaseModel):
     # The match's status.
     status: MatchStatus
 
+    # This is the event of the match.
+    event: EventMini | None = None
+
     # The first team id in the match.
     team1_id: int
 
