@@ -24,7 +24,7 @@ except sqlite3.OperationalError:
 print("👥 Insertion des utilisateurs et joueurs...")
 
 # Admin
-admin_hash = hash_password("Admin123!")
+admin_hash = hash_password("Admin@2025!")
 cursor.execute("""
     INSERT INTO users (email, password_hash, role, must_change_password, is_active)
     VALUES (?, ?, 'ADMINISTRATEUR', 0, 1)
@@ -139,7 +139,7 @@ conn.close()
 print("\n✅ BASE DE DONNÉES PEUPLÉE AVEC SUCCÈS!")
 print("=" * 60)
 print("\n📝 Informations de connexion:")
-print("   Admin: admin@padel.com / Admin123!")
+print("   Admin: admin@padel.com / Admin@2025!")
 print("   Joueur: jean.dupont@techcorp.fr / Player123!")
 print("\n" + "=" * 60)
 
