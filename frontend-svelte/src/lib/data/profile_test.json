@@ -1,0 +1,16 @@
+{
+  "user": {
+    "id": 1,
+    "email": "amandine.dupont@techcorp.com",
+    "role": "JOUEUR"
+  },
+  "player": {
+    "id": 1,
+    "first_name": "Amandine",
+    "last_name": "Dupont",
+    "company": "TechCorp",
+    "license_number": "LIC-2025-00019876",
+    "birth_date": "1992-07-18",
+    "photo_url": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDF5XsLZjD60SsGNTcNquq9VNn59Vi5mXooFRNJcTvk0HtVEE38ovxcwbM2gV8I07Pxd-uYo-2oPRhilXoywtu0vd33vtap9krlwgIitk&s=10"
+  }
+}

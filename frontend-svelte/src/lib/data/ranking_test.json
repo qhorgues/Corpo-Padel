@@ -1,0 +1,84 @@
+{
+  "rankings": [
+    {
+      "position": 1,
+      "company": "TechCorp",
+      "matches_played": 10,
+      "wins": 8,
+      "losses": 2,
+      "points": 24,
+      "sets_won": 17,
+      "sets_lost": 6
+    },
+    {
+      "position": 2,
+      "company": "InnoSoft",
+      "matches_played": 10,
+      "wins": 7,
+      "losses": 3,
+      "points": 21,
+      "sets_won": 15,
+      "sets_lost": 8
+    },
+    {
+      "position": 3,
+      "company": "CloudTech",
+      "matches_played": 10,
+      "wins": 6,
+      "losses": 4,
+      "points": 18,
+      "sets_won": 14,
+      "sets_lost": 10
+    },
+    {
+      "position": 4,
+      "company": "DataPlus",
+      "matches_played": 10,
+      "wins": 6,
+      "losses": 4,
+      "points": 18,
+      "sets_won": 13,
+      "sets_lost": 11
+    },
+    {
+      "position": 5,
+      "company": "WebServices",
+      "matches_played": 10,
+      "wins": 5,
+      "losses": 5,
+      "points": 15,
+      "sets_won": 12,
+      "sets_lost": 12
+    },
+    {
+      "position": 6,
+      "company": "FinanceHub",
+      "matches_played": 10,
+      "wins": 4,
+      "losses": 6,
+      "points": 12,
+      "sets_won": 10,
+      "sets_lost": 14
+    },
+    {
+      "position": 7,
+      "company": "MediaCorp",
+      "matches_played": 10,
+      "wins": 3,
+      "losses": 7,
+      "points": 9,
+      "sets_won": 8,
+      "sets_lost": 16
+    },
+    {
+      "position": 8,
+      "company": "StartupLab",
+      "matches_played": 10,
+      "wins": 1,
+      "losses": 9,
+      "points": 3,
+      "sets_won": 4,
+      "sets_lost": 18
+    }
+  ]
+}

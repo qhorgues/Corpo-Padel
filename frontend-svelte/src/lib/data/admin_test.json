@@ -1,0 +1,25 @@
+{
+  "joueurs": [
+    {
+      "first_name": "Luc",
+      "last_name": "Martin",
+      "company": "TechVision",
+      "license_number": "L123456",
+      "email": "luc.martin@techvision.com"
+    },
+    {
+      "first_name": "Sarah",
+      "last_name": "Dupont",
+      "company": "GreenPulse",
+      "license_number": "L654321",
+      "email": "sarah.dupont@greenpulse.fr"
+    },
+    {
+      "first_name": "Alexandre",
+      "last_name": "Bernard",
+      "company": "NovaSystems",
+      "license_number": "L987654",
+      "email": "alexandre.bernard@novasystems.eu"
+    }
+  ]
+}
