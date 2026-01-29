@@ -1,0 +1,876 @@
+<!-- ============================================
+FICHIER : src/routes/planning/+page.svelte
+============================================ -->
+
+<script lang="ts">
+    import { authStore } from "$lib/store/auth.js";
+    import planningData from "$lib/data/planning-data.json";
+
+    // Types
+    type Player = {
+        player_id: number;
+        first_name: string;
+        last_name: string;
+    };
+
+    type Team = {
+        team_id: number;
+        company: string;
+        players: Player[];
+    };
+
+    type Match = {
+        match_id: number;
+        court_number: number;
+        team1: Team;
+        team2: Team;
+        status: string;
+        score_team1: string | null;
+        score_team2: string | null;
+    };
+
+    type Event = {
+        event_id: number;
+        date: string;
+        time: string;
+        matches: Match[];
+    };
+
+    type TeamOption = {
+        id: number;
+        company: string;
+    };
+
+    type MatchForm = {
+        court_number: number;
+        team1_id: number | string;
+        team2_id: number | string;
+    };
+
+    type EventForm = {
+        date: string;
+        time: string;
+        match_count: number;
+        matches: MatchForm[];
+    };
+
+    // Données
+    let events: Event[] = planningData.events;
+    let userTeams: number[] = planningData.user_teams || [];
+    let teams: TeamOption[] = [];
+
+    // État du calendrier
+    let currentDate = new Date();
+    let currentYear = currentDate.getFullYear();
+    let currentMonth = currentDate.getMonth();
+    let selectedDate: string | null = null;
+
+    // Filtres
+    let showOnlyUserEvents = !$authStore.isAdmin; // Par défaut, les joueurs voient leurs événements
+
+    // Modales
+    let showEventModal = false;
+    let showAddEditModal = false;
+    let showDeleteModal = false;
+    let editMode = false;
+    let currentEvent: Event | null = null;
+    let eventToDelete: Event | null = null;
+
+    // Formulaire
+    let eventForm: EventForm = {
+        date: "",
+        time: "",
+        match_count: 1,
+        matches: [{ court_number: 1, team1_id: "", team2_id: "" }],
+    };
+
+    // Extraire la liste des équipes
+    const teamMap = new Map<number, TeamOption>();
+    events.forEach((event) => {
+        event.matches.forEach((match) => {
+            if (!teamMap.has(match.team1.team_id)) {
+                teamMap.set(match.team1.team_id, {
+                    id: match.team1.team_id,
+                    company: match.team1.company,
+                });
+            }
+            if (!teamMap.has(match.team2.team_id)) {
+                teamMap.set(match.team2.team_id, {
+                    id: match.team2.team_id,
+                    company: match.team2.company,
+                });
+            }
+        });
+    });
+    teams = Array.from(teamMap.values()).sort((a, b) =>
+        a.company.localeCompare(b.company),
+    );
+
+    // Filtrer les événements
+    $: filteredEvents = events.filter((event) => {
+        if (!showOnlyUserEvents) return true;
+
+        // Vérifier si l'utilisateur participe à au moins un match de l'événement
+        return event.matches.some(
+            (match) =>
+                userTeams.includes(match.team1.team_id) ||
+                userTeams.includes(match.team2.team_id),
+        );
+    });
+
+    // Obtenir les événements d'une date spécifique
+    function getEventsForDate(dateStr: string): Event[] {
+        return filteredEvents.filter((event) => event.date === dateStr);
+    }
+
+    // Générer le calendrier du mois
+    function generateCalendar(year: number, month: number): Date[] {
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const daysInMonth = lastDay.getDate();
+
+        const startDay = firstDay.getDay(); // 0 = dimanche
+        const days: Date[] = [];
+
+        // Ajouter les jours vides du début
+        for (let i = 0; i < startDay; i++) {
+            days.push(new Date(0)); // Date invalide pour les cases vides
+        }
+
+        // Ajouter les jours du mois
+        for (let i = 1; i <= daysInMonth; i++) {
+            days.push(new Date(year, month, i));
+        }
+
+        return days;
+    }
+
+    $: calendarDays = generateCalendar(currentYear, currentMonth);
+
+    // Navigation du calendrier
+    function previousMonth(): void {
+        if (currentMonth === 0) {
+            currentMonth = 11;
+            currentYear--;
+        } else {
+            currentMonth--;
+        }
+    }
+
+    function nextMonth(): void {
+        if (currentMonth === 11) {
+            currentMonth = 0;
+            currentYear++;
+        } else {
+            currentMonth++;
+        }
+    }
+
+    // Noms des mois
+    const monthNames = [
+        "Janvier",
+        "Février",
+        "Mars",
+        "Avril",
+        "Mai",
+        "Juin",
+        "Juillet",
+        "Août",
+        "Septembre",
+        "Octobre",
+        "Novembre",
+        "Décembre",
+    ];
+
+    // Formater une date
+    function formatDate(date: Date): string {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    function formatDateLong(dateStr: string): string {
+        const date = new Date(dateStr);
+        const days = [
+            "Dimanche",
+            "Lundi",
+            "Mardi",
+            "Mercredi",
+            "Jeudi",
+            "Vendredi",
+            "Samedi",
+        ];
+        const dayName = days[date.getDay()];
+        const day = date.getDate();
+        const month = monthNames[date.getMonth()];
+        const year = date.getFullYear();
+        return `${dayName} ${day} ${month} ${year}`;
+    }
+
+    // Cliquer sur un jour
+    function handleDayClick(date: Date): void {
+        if (date.getTime() === 0) return; // Case vide
+        const dateStr = formatDate(date);
+        const dayEvents = getEventsForDate(dateStr);
+
+        if (dayEvents.length > 0) {
+            selectedDate = dateStr;
+            showEventModal = true;
+        }
+    }
+
+    // Vérifier si un jour a des événements
+    function hasEvents(date: Date): boolean {
+        if (date.getTime() === 0) return false;
+        const dateStr = formatDate(date);
+        return getEventsForDate(dateStr).length > 0;
+    }
+
+    // Ouvrir la modale d'ajout
+    function openAddModal(): void {
+        editMode = false;
+        currentEvent = null;
+        eventForm = {
+            date: "",
+            time: "",
+            match_count: 1,
+            matches: [{ court_number: 1, team1_id: "", team2_id: "" }],
+        };
+        showAddEditModal = true;
+    }
+
+    // Ouvrir la modale de modification
+    function openEditModal(event: Event): void {
+        editMode = true;
+        currentEvent = event;
+        eventForm = {
+            date: event.date,
+            time: event.time,
+            match_count: event.matches.length,
+            matches: event.matches.map((m) => ({
+                court_number: m.court_number,
+                team1_id: m.team1.team_id,
+                team2_id: m.team2.team_id,
+            })),
+        };
+        showEventModal = false;
+        showAddEditModal = true;
+    }
+
+    // Mettre à jour le nombre de matchs
+    function updateMatchCount(): void {
+        const count = eventForm.match_count;
+        const currentLength = eventForm.matches.length;
+
+        if (count > currentLength) {
+            // Ajouter des matchs
+            for (let i = currentLength; i < count; i++) {
+                eventForm.matches.push({
+                    court_number: i + 1,
+                    team1_id: "",
+                    team2_id: "",
+                });
+            }
+        } else if (count < currentLength) {
+            // Supprimer des matchs
+            eventForm.matches = eventForm.matches.slice(0, count);
+        }
+    }
+
+    $: if (eventForm.match_count) {
+        updateMatchCount();
+    }
+
+    // Valider le formulaire
+    function validateEventForm(): string | null {
+        // Date >= aujourd'hui
+        const today = new Date().toISOString().split("T")[0];
+        if (eventForm.date < today) {
+            return "La date doit être aujourd'hui ou dans le futur.";
+        }
+
+        // Format de l'heure
+        const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+        if (!timeRegex.test(eventForm.time)) {
+            return "L'heure doit être au format HH:MM (00:00 à 23:59).";
+        }
+
+        // Pistes uniques
+        const courts = eventForm.matches.map((m) => m.court_number);
+        const uniqueCourts = new Set(courts);
+        if (courts.length !== uniqueCourts.size) {
+            return "Deux matchs ne peuvent pas utiliser la même piste.";
+        }
+
+        // Équipes uniques
+        const teamIds: (number | string)[] = [];
+        for (const match of eventForm.matches) {
+            if (!match.team1_id || !match.team2_id) {
+                return "Veuillez sélectionner toutes les équipes.";
+            }
+            if (match.team1_id === match.team2_id) {
+                return "Les deux équipes d'un match doivent être différentes.";
+            }
+            teamIds.push(match.team1_id, match.team2_id);
+        }
+        const uniqueTeams = new Set(teamIds);
+        if (teamIds.length !== uniqueTeams.size) {
+            return "Une équipe ne peut jouer qu'un seul match par événement.";
+        }
+
+        return null;
+    }
+
+    // Sauvegarder l'événement
+    function saveEvent(): void {
+        const error = validateEventForm();
+        if (error) {
+            alert(error);
+            return;
+        }
+
+        if (editMode && currentEvent) {
+            // Modifier l'événement existant
+            const index = events.findIndex(
+                (e) => e.event_id === currentEvent!.event_id,
+            );
+            if (index !== -1) {
+                events[index] = {
+                    ...events[index],
+                    date: eventForm.date,
+                    time: eventForm.time,
+                    matches: eventForm.matches.map((m, idx) => {
+                        const team1 = teams.find((t) => t.id === Number(m.team1_id));
+                        const team2 = teams.find((t) => t.id === Number(m.team2_id));
+                        const existingMatch = events[index].matches[idx];
+
+                        return {
+                            match_id: existingMatch?.match_id || Date.now() + idx,
+                            court_number: m.court_number,
+                            team1: {
+                                team_id: Number(m.team1_id),
+                                company: team1!.company,
+                                players: [],
+                            },
+                            team2: {
+                                team_id: Number(m.team2_id),
+                                company: team2!.company,
+                                players: [],
+                            },
+                            status: existingMatch?.status || "A_VENIR",
+                            score_team1: existingMatch?.score_team1 || null,
+                            score_team2: existingMatch?.score_team2 || null,
+                        };
+                    }),
+                };
+            }
+        } else {
+            // Ajouter un nouvel événement
+            const newEvent: Event = {
+                event_id:
+                    Math.max(...events.map((e) => e.event_id), 0) + 1,
+                date: eventForm.date,
+                time: eventForm.time,
+                matches: eventForm.matches.map((m, idx) => {
+                    const team1 = teams.find((t) => t.id === Number(m.team1_id));
+                    const team2 = teams.find((t) => t.id === Number(m.team2_id));
+
+                    return {
+                        match_id: Date.now() + idx,
+                        court_number: m.court_number,
+                        team1: {
+                            team_id: Number(m.team1_id),
+                            company: team1!.company,
+                            players: [],
+                        },
+                        team2: {
+                            team_id: Number(m.team2_id),
+                            company: team2!.company,
+                            players: [],
+                        },
+                        status: "A_VENIR",
+                        score_team1: null,
+                        score_team2: null,
+                    };
+                }),
+            };
+
+            events = [...events, newEvent];
+        }
+
+        showAddEditModal = false;
+    }
+
+    // Confirmer la suppression
+    function confirmDelete(event: Event): void {
+        // Vérifier que tous les matchs sont à venir
+        const allUpcoming = event.matches.every((m) => m.status === "A_VENIR");
+        if (!allUpcoming) {
+            alert(
+                "Seuls les événements dont tous les matchs sont à venir peuvent être supprimés.",
+            );
+            return;
+        }
+
+        eventToDelete = event;
+        showEventModal = false;
+        showDeleteModal = true;
+    }
+
+    // Supprimer l'événement
+    function deleteEvent(): void {
+        if (eventToDelete) {
+            events = events.filter((e) => e.event_id !== eventToDelete!.event_id);
+            showDeleteModal = false;
+            eventToDelete = null;
+        }
+    }
+
+    // Badge de statut
+    function getStatusBadge(status: string): string {
+        if (status === "A_VENIR") return "bg-blue-100 text-blue-800";
+        if (status === "TERMINE") return "bg-green-100 text-green-800";
+        if (status === "ANNULE") return "bg-red-100 text-red-800";
+        return "bg-gray-100 text-gray-800";
+    }
+
+    function getStatusLabel(status: string): string {
+        if (status === "A_VENIR") return "À venir";
+        if (status === "TERMINE") return "Terminé";
+        if (status === "ANNULE") return "Annulé";
+        return status;
+    }
+</script>
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- En-tête -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Planning</h1>
+            <p class="text-gray-600">
+                Calendrier de la saison - Cliquez sur un jour pour voir les
+                événements
+            </p>
+        </div>
+
+        <!-- Filtres et actions -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    <input
+                        type="checkbox"
+                        bind:checked={showOnlyUserEvents}
+                        class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                    />
+                    <span class="text-gray-700"
+                        >Voir uniquement mes événements</span
+                    >
+                </label>
+
+                {#if $authStore.isAdmin}
+                    <button
+                        on:click={openAddModal}
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    >
+                        ➕ Ajouter un événement
+                    </button>
+                {/if}
+            </div>
+        </div>
+
+        <!-- Calendrier -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <!-- Navigation du calendrier -->
+            <div class="flex items-center justify-between mb-6">
+                <button
+                    on:click={previousMonth}
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                >
+                    ← Précédent
+                </button>
+
+                <h2 class="text-2xl font-bold text-gray-900">
+                    {monthNames[currentMonth]}
+                    {currentYear}
+                </h2>
+
+                <button
+                    on:click={nextMonth}
+                    class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                >
+                    Suivant →
+                </button>
+            </div>
+
+            <!-- Jours de la semaine -->
+            <div class="grid grid-cols-7 gap-2 mb-2">
+                {#each ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"] as day}
+                    <div
+                        class="text-center font-semibold text-gray-600 py-2"
+                    >
+                        {day}
+                    </div>
+                {/each}
+            </div>
+
+            <!-- Grille du calendrier -->
+            <div class="grid grid-cols-7 gap-2">
+                {#each calendarDays as day}
+                    {#if day.getTime() === 0}
+                        <!-- Case vide -->
+                        <div class="aspect-square"></div>
+                    {:else}
+                        <button
+                            on:click={() => handleDayClick(day)}
+                            class="aspect-square border rounded-lg p-2 hover:bg-gray-50 transition-colors {hasEvents(
+                                day,
+                            )
+                                ? 'bg-blue-50 border-blue-300 font-semibold'
+                                : 'border-gray-200'} {day.getDate() ===
+                                new Date().getDate() &&
+                            day.getMonth() === new Date().getMonth() &&
+                            day.getFullYear() === new Date().getFullYear()
+                                ? 'ring-2 ring-blue-500'
+                                : ''}"
+                        >
+                            <div class="text-sm">{day.getDate()}</div>
+                            {#if hasEvents(day)}
+                                <div
+                                    class="text-xs text-blue-600 mt-1"
+                                >
+                                    {getEventsForDate(formatDate(day)).length}
+                                    event{getEventsForDate(formatDate(day))
+                                        .length > 1
+                                        ? "s"
+                                        : ""}
+                                </div>
+                            {/if}
+                        </button>
+                    {/if}
+                {/each}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modale des événements du jour -->
+{#if showEventModal && selectedDate}
+    <div
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        on:click={() => (showEventModal = false)}
+        role="button"
+        tabindex="0"
+        on:keydown={(e) => e.key === "Escape" && (showEventModal = false)}
+    >
+        <div
+            class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto p-6"
+            on:click|stopPropagation
+            role="dialog"
+            tabindex="-1"
+        >
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                Événements du {formatDateLong(selectedDate)}
+            </h2>
+
+            <div class="space-y-6">
+                {#each getEventsForDate(selectedDate) as event}
+                    <div class="border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <h3 class="text-xl font-semibold mb-2">
+                                    Créneau : {event.time}
+                                </h3>
+                                <p class="text-gray-600">
+                                    {event.matches.length} match{event.matches
+                                        .length > 1
+                                        ? "s"
+                                        : ""}
+                                </p>
+                            </div>
+
+                            {#if $authStore.isAdmin}
+                                <div class="flex gap-2">
+                                    <button
+                                        on:click={() => openEditModal(event)}
+                                        class="px-4 py-2 bg-yellow-500 text-white rounded-lg text-sm font-semibold hover:bg-yellow-600 transition-colors"
+                                    >
+                                        ✏️ Modifier
+                                    </button>
+                                    <button
+                                        on:click={() => confirmDelete(event)}
+                                        class="px-4 py-2 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600 transition-colors"
+                                    >
+                                        🗑️ Supprimer
+                                    </button>
+                                </div>
+                            {/if}
+                        </div>
+
+                        <!-- Matchs -->
+                        <div class="space-y-4">
+                            {#each event.matches as match}
+                                <div
+                                    class="bg-gray-50 rounded-lg p-4 border border-gray-200"
+                                >
+                                    <div class="flex items-center justify-between mb-3">
+                                        <span
+                                            class="text-sm font-semibold text-gray-600"
+                                            >Piste {match.court_number}</span
+                                        >
+                                        <span
+                                            class="inline-block px-3 py-1 rounded-full text-xs font-semibold {getStatusBadge(
+                                                match.status,
+                                            )}"
+                                        >
+                                            {getStatusLabel(match.status)}
+                                        </span>
+                                    </div>
+
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex-1">
+                                            <div
+                                                class="font-semibold text-blue-600 mb-1"
+                                            >
+                                                {match.team1.company}
+                                            </div>
+                                            {#if match.score_team1}
+                                                <div
+                                                    class="text-sm text-gray-700 font-mono"
+                                                >
+                                                    {match.score_team1}
+                                                </div>
+                                            {/if}
+                                        </div>
+
+                                        <div
+                                            class="px-4 text-xl font-bold text-gray-400"
+                                        >
+                                            VS
+                                        </div>
+
+                                        <div class="flex-1 text-right">
+                                            <div
+                                                class="font-semibold text-blue-600 mb-1"
+                                            >
+                                                {match.team2.company}
+                                            </div>
+                                            {#if match.score_team2}
+                                                <div
+                                                    class="text-sm text-gray-700 font-mono"
+                                                >
+                                                    {match.score_team2}
+                                                </div>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                </div>
+                            {/each}
+                        </div>
+                    </div>
+                {/each}
+            </div>
+
+            <div class="mt-6">
+                <button
+                    on:click={() => (showEventModal = false)}
+                    class="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                >
+                    Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}
+
+<!-- Modale Ajouter/Modifier événement -->
+{#if showAddEditModal}
+    <div
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        on:click={() => (showAddEditModal = false)}
+        role="button"
+        tabindex="0"
+        on:keydown={(e) => e.key === "Escape" && (showAddEditModal = false)}
+    >
+        <div
+            class="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6"
+            on:click|stopPropagation
+            role="dialog"
+            tabindex="-1"
+        >
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                {editMode ? "Modifier l'événement" : "Ajouter un événement"}
+            </h2>
+
+            <form on:submit|preventDefault={saveEvent} class="space-y-6">
+                <!-- Date et heure -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-gray-700 mb-1"
+                            >Date</label
+                        >
+                        <input
+                            type="date"
+                            bind:value={eventForm.date}
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                    </div>
+
+                    <div>
+                        <label
+                            class="block text-sm font-medium text-gray-700 mb-1"
+                            >Heure</label
+                        >
+                        <input
+                            type="time"
+                            bind:value={eventForm.time}
+                            required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        />
+                    </div>
+                </div>
+
+                <!-- Nombre de matchs -->
+                <div>
+                    <label
+                        class="block text-sm font-medium text-gray-700 mb-1"
+                        >Nombre de matchs</label
+                    >
+                    <select
+                        bind:value={eventForm.match_count}
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value={1}>1 match</option>
+                        <option value={2}>2 matchs</option>
+                        <option value={3}>3 matchs</option>
+                    </select>
+                </div>
+
+                <!-- Matchs -->
+                <div class="space-y-4">
+                    {#each eventForm.matches as match, idx}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-900 mb-3">
+                                Match {idx + 1}
+                            </h3>
+
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 mb-1"
+                                        >Piste</label
+                                    >
+                                    <input
+                                        type="number"
+                                        bind:value={match.court_number}
+                                        min="1"
+                                        max="10"
+                                        required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 mb-1"
+                                        >Équipe 1</label
+                                    >
+                                    <select
+                                        bind:value={match.team1_id}
+                                        required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    >
+                                        <option value="">Sélectionner</option>
+                                        {#each teams as team}
+                                            <option value={team.id}
+                                                >{team.company}</option
+                                            >
+                                        {/each}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label
+                                        class="block text-sm font-medium text-gray-700 mb-1"
+                                        >Équipe 2</label
+                                    >
+                                    <select
+                                        bind:value={match.team2_id}
+                                        required
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    >
+                                        <option value="">Sélectionner</option>
+                                        {#each teams as team}
+                                            <option value={team.id}
+                                                >{team.company}</option
+                                            >
+                                        {/each}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    {/each}
+                </div>
+
+                <!-- Boutons -->
+                <div class="flex space-x-3 pt-4">
+                    <button
+                        type="button"
+                        on:click={() => (showAddEditModal = false)}
+                        class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                    >
+                        Annuler
+                    </button>
+                    <button
+                        type="submit"
+                        class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    >
+                        {editMode ? "Enregistrer" : "Ajouter"}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{/if}
+
+<!-- Modale de confirmation de suppression -->
+{#if showDeleteModal}
+    <div
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+        on:click={() => (showDeleteModal = false)}
+        role="button"
+        tabindex="0"
+        on:keydown={(e) => e.key === "Escape" && (showDeleteModal = false)}
+    >
+        <div
+            class="bg-white rounded-lg shadow-xl max-w-md w-full p-6"
+            on:click|stopPropagation
+            role="dialog"
+            tabindex="-1"
+        >
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">
+                Confirmer la suppression
+            </h2>
+            <p class="text-gray-700 mb-6">
+                Êtes-vous sûr de vouloir supprimer cet événement ?
+            </p>
+
+            <div class="flex space-x-3">
+                <button
+                    on:click={() => (showDeleteModal = false)}
+                    class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition-colors"
+                >
+                    Annuler
+                </button>
+                <button
+                    on:click={deleteEvent}
+                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
+                >
+                    Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+{/if}

@@ -1,0 +1,245 @@
+{
+  "matches": [
+    {
+      "match_id": 1,
+      "date": "2026-02-05",
+      "time": "19:30",
+      "court_number": 3,
+      "status": "A_VENIR",
+      "team1": {
+        "team_id": 1,
+        "company": "TechCorp",
+        "players": [
+          { "player_id": 1, "first_name": "Thomas", "last_name": "Durand" },
+          { "player_id": 2, "first_name": "Marie", "last_name": "Lambert" }
+        ]
+      },
+      "team2": {
+        "team_id": 2,
+        "company": "InnoSoft",
+        "players": [
+          { "player_id": 3, "first_name": "Sophie", "last_name": "Martin" },
+          { "player_id": 4, "first_name": "Lucas", "last_name": "Girard" }
+        ]
+      },
+      "pool": "Poule A"
+    },
+    {
+      "match_id": 2,
+      "date": "2026-02-06",
+      "time": "20:00",
+      "court_number": 1,
+      "status": "A_VENIR",
+      "team1": {
+        "team_id": 3,
+        "company": "DataPlus",
+        "players": [
+          { "player_id": 5, "first_name": "Claire", "last_name": "Dubois" },
+          { "player_id": 6, "first_name": "Antoine", "last_name": "Moreau" }
+        ]
+      },
+      "team2": {
+        "team_id": 4,
+        "company": "CloudTech",
+        "players": [
+          { "player_id": 7, "first_name": "Marie", "last_name": "Lefevre" },
+          { "player_id": 8, "first_name": "Pierre", "last_name": "Roux" }
+        ]
+      },
+      "pool": "Poule A"
+    },
+    {
+      "match_id": 3,
+      "date": "2026-02-08",
+      "time": "18:00",
+      "court_number": 5,
+      "status": "A_VENIR",
+      "team1": {
+        "team_id": 5,
+        "company": "WebServices",
+        "players": [
+          { "player_id": 9, "first_name": "Laura", "last_name": "Bernard" },
+          { "player_id": 10, "first_name": "Julien", "last_name": "Fournier" }
+        ]
+      },
+      "team2": {
+        "team_id": 1,
+        "company": "TechCorp",
+        "players": [
+          { "player_id": 1, "first_name": "Thomas", "last_name": "Durand" },
+          { "player_id": 2, "first_name": "Marie", "last_name": "Lambert" }
+        ]
+      },
+      "pool": "Poule B"
+    },
+    {
+      "match_id": 4,
+      "date": "2026-02-10",
+      "time": "19:00",
+      "court_number": 2,
+      "status": "ANNULE",
+      "team1": {
+        "team_id": 6,
+        "company": "MediaCorp",
+        "players": [
+          { "player_id": 11, "first_name": "Julie", "last_name": "Rousseau" },
+          { "player_id": 12, "first_name": "Nicolas", "last_name": "Blanc" }
+        ]
+      },
+      "team2": {
+        "team_id": 2,
+        "company": "InnoSoft",
+        "players": [
+          { "player_id": 3, "first_name": "Sophie", "last_name": "Martin" },
+          { "player_id": 4, "first_name": "Lucas", "last_name": "Girard" }
+        ]
+      },
+      "pool": "Poule B"
+    },
+    {
+      "match_id": 5,
+      "date": "2026-02-12",
+      "time": "20:30",
+      "court_number": 4,
+      "status": "A_VENIR",
+      "team1": {
+        "team_id": 7,
+        "company": "FinanceHub",
+        "players": [
+          { "player_id": 13, "first_name": "Emma", "last_name": "Petit" },
+          { "player_id": 14, "first_name": "Alexandre", "last_name": "Garcia" }
+        ]
+      },
+      "team2": {
+        "team_id": 3,
+        "company": "DataPlus",
+        "players": [
+          { "player_id": 5, "first_name": "Claire", "last_name": "Dubois" },
+          { "player_id": 6, "first_name": "Antoine", "last_name": "Moreau" }
+        ]
+      },
+      "pool": "Poule A"
+    },
+    {
+      "match_id": 6,
+      "date": "2026-02-15",
+      "time": "18:30",
+      "court_number": 7,
+      "status": "A_VENIR",
+      "team1": {
+        "team_id": 4,
+        "company": "CloudTech",
+        "players": [
+          { "player_id": 7, "first_name": "Marie", "last_name": "Lefevre" },
+          { "player_id": 8, "first_name": "Pierre", "last_name": "Roux" }
+        ]
+      },
+      "team2": {
+        "team_id": 5,
+        "company": "WebServices",
+        "players": [
+          { "player_id": 9, "first_name": "Laura", "last_name": "Bernard" },
+          { "player_id": 10, "first_name": "Julien", "last_name": "Fournier" }
+        ]
+      },
+      "pool": "Poule A"
+    },
+    {
+      "match_id": 7,
+      "date": "2026-02-18",
+      "time": "19:30",
+      "court_number": 6,
+      "status": "A_VENIR",
+      "team1": {
+        "team_id": 1,
+        "company": "TechCorp",
+        "players": [
+          { "player_id": 1, "first_name": "Thomas", "last_name": "Durand" },
+          { "player_id": 2, "first_name": "Marie", "last_name": "Lambert" }
+        ]
+      },
+      "team2": {
+        "team_id": 6,
+        "company": "MediaCorp",
+        "players": [
+          { "player_id": 11, "first_name": "Julie", "last_name": "Rousseau" },
+          { "player_id": 12, "first_name": "Nicolas", "last_name": "Blanc" }
+        ]
+      },
+      "pool": "Poule B"
+    },
+    {
+      "match_id": 8,
+      "date": "2026-02-20",
+      "time": "20:00",
+      "court_number": 8,
+      "status": "A_VENIR",
+      "team1": {
+        "team_id": 2,
+        "company": "InnoSoft",
+        "players": [
+          { "player_id": 3, "first_name": "Sophie", "last_name": "Martin" },
+          { "player_id": 4, "first_name": "Lucas", "last_name": "Girard" }
+        ]
+      },
+      "team2": {
+        "team_id": 7,
+        "company": "FinanceHub",
+        "players": [
+          { "player_id": 13, "first_name": "Emma", "last_name": "Petit" },
+          { "player_id": 14, "first_name": "Alexandre", "last_name": "Garcia" }
+        ]
+      },
+      "pool": "Poule A"
+    },
+    {
+      "match_id": 9,
+      "date": "2026-02-22",
+      "time": "17:30",
+      "court_number": 9,
+      "status": "A_VENIR",
+      "team1": {
+        "team_id": 3,
+        "company": "DataPlus",
+        "players": [
+          { "player_id": 5, "first_name": "Claire", "last_name": "Dubois" },
+          { "player_id": 6, "first_name": "Antoine", "last_name": "Moreau" }
+        ]
+      },
+      "team2": {
+        "team_id": 1,
+        "company": "TechCorp",
+        "players": [
+          { "player_id": 1, "first_name": "Thomas", "last_name": "Durand" },
+          { "player_id": 2, "first_name": "Marie", "last_name": "Lambert" }
+        ]
+      },
+      "pool": "Poule A"
+    },
+    {
+      "match_id": 10,
+      "date": "2026-02-25",
+      "time": "19:00",
+      "court_number": 10,
+      "status": "A_VENIR",
+      "team1": {
+        "team_id": 4,
+        "company": "CloudTech",
+        "players": [
+          { "player_id": 7, "first_name": "Marie", "last_name": "Lefevre" },
+          { "player_id": 8, "first_name": "Pierre", "last_name": "Roux" }
+        ]
+      },
+      "team2": {
+        "team_id": 6,
+        "company": "MediaCorp",
+        "players": [
+          { "player_id": 11, "first_name": "Julie", "last_name": "Rousseau" },
+          { "player_id": 12, "first_name": "Nicolas", "last_name": "Blanc" }
+        ]
+      },
+      "pool": "Poule B"
+    }
+  ],
+  "user_teams": [1, 3]
+}
