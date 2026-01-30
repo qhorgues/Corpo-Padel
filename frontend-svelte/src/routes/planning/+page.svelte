@@ -69,7 +69,7 @@ FICHIER : src/routes/planning/+page.svelte
     let selectedDate: string | null = null;
 
     // Filtres
-    let showOnlyUserEvents = !$authStore.isAdmin; // Par défaut, les joueurs voient leurs événements
+    let showOnlyUserEvents = false; // Par défaut décoché car userTeams n'est pas encore implémenté
 
     // Modales
     let showEventModal = false;
@@ -558,29 +558,29 @@ FICHIER : src/routes/planning/+page.svelte
                         <!-- Case vide -->
                         <div class="aspect-square"></div>
                     {:else}
+                        {@const dayHasEvents = hasEvents(day)}
+                        {@const isToday = day.getDate() === new Date().getDate() &&
+                            day.getMonth() === new Date().getMonth() &&
+                            day.getFullYear() === new Date().getFullYear()}
+                        
                         <button
                             on:click={() => handleDayClick(day)}
-                            class="aspect-square border rounded-lg p-2 hover:bg-gray-50 transition-colors {hasEvents(
-                                day,
-                            )
-                                ? 'bg-blue-50 border-blue-300 font-semibold'
-                                : 'border-gray-200'} {day.getDate() ===
-                                new Date().getDate() &&
-                            day.getMonth() === new Date().getMonth() &&
-                            day.getFullYear() === new Date().getFullYear()
-                                ? 'ring-2 ring-blue-500'
-                                : ''}"
+                            class="aspect-square border rounded-lg p-2 transition-all duration-200 
+                                {dayHasEvents
+                                    ? 'bg-blue-50 border-blue-400 hover:bg-blue-100 hover:border-blue-500 cursor-pointer shadow-sm'
+                                    : 'border-gray-200 hover:bg-gray-50 cursor-default'}
+                                {isToday ? 'ring-2 ring-blue-600 ring-offset-1' : ''}"
                         >
-                            <div class="text-sm">{day.getDate()}</div>
-                            {#if hasEvents(day)}
-                                <div
-                                    class="text-xs text-blue-600 mt-1"
-                                >
+                            <div class="text-sm {dayHasEvents ? 'font-bold text-blue-700' : 'text-gray-700'}">
+                                {day.getDate()}
+                            </div>
+                            {#if dayHasEvents}
+                                <div class="mt-1 flex items-center justify-center">
+                                    <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
+                                </div>
+                                <div class="text-xs text-blue-600 mt-1 font-medium">
                                     {getEventsForDate(formatDate(day)).length}
-                                    event{getEventsForDate(formatDate(day))
-                                        .length > 1
-                                        ? "s"
-                                        : ""}
+                                    event{getEventsForDate(formatDate(day)).length > 1 ? "s" : ""}
                                 </div>
                             {/if}
                         </button>

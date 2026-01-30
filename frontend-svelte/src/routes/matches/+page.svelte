@@ -356,19 +356,33 @@ FICHIER : src/routes/matches/+page.svelte
         }
 
         try {
-            const matchInput = {
-                court_number: formData.court_number,
-                status: formData.status,
-                team1_id: Number(formData.team1_id),
-                team2_id: Number(formData.team2_id)
-            };
-
             if (editMode && currentMatch) {
-                // Modifier le match existant
+                // En mode édition : modifier uniquement le match (pas l'événement)
+                const matchInput = {
+                    court_number: formData.court_number,
+                    status: formData.status,
+                    team1_id: Number(formData.team1_id),
+                    team2_id: Number(formData.team2_id)
+                };
                 await matchesService.updateMatch(currentMatch.match_id, matchInput);
             } else {
-                // Ajouter un nouveau match
-                await matchesService.createMatch(matchInput);
+                // En mode création : créer d'abord un événement avec la date et l'heure
+                const eventInput = {
+                    event_date: formData.date,
+                    event_time: formData.time,
+                    matches: [
+                        {
+                            court_number: formData.court_number,
+                            status: formData.status,
+                            team1_id: Number(formData.team1_id),
+                            team2_id: Number(formData.team2_id)
+                        }
+                    ]
+                };
+                
+                // Importer eventsService en haut du fichier si pas déjà fait
+                const { eventsService } = await import("$lib/services/event");
+                await eventsService.createEvent(eventInput);
             }
 
             // Recharger les données
