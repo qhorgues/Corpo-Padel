@@ -1,5 +1,5 @@
 import sqlite3
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 import bcrypt
 
 # Connexion à la base de données
@@ -10,31 +10,7 @@ cursor = conn.cursor()
 def hash_password(password):
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-print("🗑️  Nettoyage des données existantes...")
-try:
-    cursor.execute("DELETE FROM matches")
-    cursor.execute("DELETE FROM events")
-    cursor.execute("DELETE FROM teams")
-    cursor.execute("DELETE FROM pools")
-    cursor.execute("DELETE FROM players")
-    cursor.execute("DELETE FROM users")
-except sqlite3.OperationalError:
-    print("Tables vides ou inexistantes, on continue...")
-
 print("👥 Insertion des utilisateurs et joueurs...")
-
-# Admin
-admin_hash = hash_password("Admin@2025!")
-cursor.execute("""
-    INSERT INTO users (email, password_hash, role, must_change_password, is_active)
-    VALUES (?, ?, 'ADMINISTRATEUR', 0, 1)
-""", ("admin@padel.com", admin_hash))
-admin_id = cursor.lastrowid
-
-cursor.execute("""
-    INSERT INTO players (last_name, first_name, company, license_number, birth_date, photo_url, user_id)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-""", ("Admin", "Admin", "Admin", "L000000", "1990-01-01", "admin.jpg", admin_id))
 
 # Joueurs
 players_data = [
@@ -98,11 +74,15 @@ for company, player1, player2, pool_id in teams_data:
 
 print("📅 Insertion des événements...")
 
+now = datetime.now()
+start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
 events_data = [
-    ("2025-03-15", "10:00:00"),
-    ("2025-06-20", "14:00:00"),
-    ("2025-09-10", "09:00:00"),
-    ("2025-12-05", "15:00:00"),
+    (
+        (start + timedelta(days=i * 10)).strftime("%Y-%m-%d"),
+        t
+    )
+    for i, t in enumerate(["10:00:00", "14:00:00", "09:00:00", "15:00:00"])
 ]
 
 event_ids = []
@@ -117,7 +97,7 @@ print("🎾 Insertion des matchs...")
 
 matches_data = [
     (event_ids[0], team_ids[0], team_ids[1], 1, "A_VENIR", None, None),
-    (event_ids[0], team_ids[2], team_ids[3], 2, "A_VENIR", None, None),
+    (event_ids[3], team_ids[2], team_ids[3], 2, "A_VENIR", None, None),
     (event_ids[1], team_ids[4], team_ids[5], 3, "A_VENIR", None, None),
     (event_ids[2], team_ids[0], team_ids[1], 1, "A_VENIR", None, None),
     (event_ids[2], team_ids[2], team_ids[3], 2, "TERMINE", 6, 3),

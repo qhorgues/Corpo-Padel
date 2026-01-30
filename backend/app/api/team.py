@@ -5,14 +5,14 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
-from app.models.models import Match, Team, User
+from app.models.models import Match, Team
 from app.schemas.team import TeamRequest, TeamResponse, TeamsListResponse
 
 router = APIRouter()
 
 
 @router.get("", response_model=TeamsListResponse)
-def list_teams(pool_id: int | None = Query(None), company: str | None = Query(None), db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def list_teams(pool_id: int | None = Query(None), company: str | None = Query(None), db: Session = Depends(get_db), _: str = Depends(get_current_user)):
     """
     This function gets all the teams.
 
@@ -37,7 +37,7 @@ def list_teams(pool_id: int | None = Query(None), company: str | None = Query(No
 
 
 @router.get("/{team_id}", response_model=TeamResponse)
-def get_team(team_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def get_team(team_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_user)):
     """
     This function gets a specific teams.
 
@@ -54,7 +54,7 @@ def get_team(team_id: int, db: Session = Depends(get_db), _: User = Depends(get_
 
 
 @router.post("", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
-def create_team(data: TeamRequest, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
+def create_team(data: TeamRequest, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
     """
     This function creates a teams.
 
@@ -72,7 +72,7 @@ def create_team(data: TeamRequest, db: Session = Depends(get_db), _: User = Depe
 
 
 @router.put("/{team_id}", response_model=TeamResponse)
-def update_team(team_id: int, data: TeamRequest, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
+def update_team(team_id: int, data: TeamRequest, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
     """
     This function updates a teams.
 
@@ -99,7 +99,7 @@ def update_team(team_id: int, data: TeamRequest, db: Session = Depends(get_db), 
 
 
 @router.delete("/{team_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_team(team_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
+def delete_team(team_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
     """
     This function remove a team.
 

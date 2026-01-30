@@ -42,9 +42,6 @@ class PlayerResponse(BaseModel):
     # This is the player's license.
     license_number: str
 
-    # This is the player's email.
-    email: Optional[str] = None
-
     # This is the player's birth date.
     birth_date: Optional[date] = None
 
@@ -63,25 +60,25 @@ class PlayerRequest(BaseModel):
     """
 
     # This is the player's first name.
-    first_name: Optional[str] = None
+    first_name: str
 
     # This is the player's last name.
-    last_name: Optional[str] = None
+    last_name: str
 
     # This is the player's company name.
-    company: Optional[str] = None
+    company: str
 
     # This is the player's license.
-    license_number: Optional[str] = None
+    license_number: str
 
     # This is the player's mail.
-    email: Optional[EmailStr] = None
+    email: EmailStr
 
     # This is the player's password.
-    password: Optional[str] = None
+    password: str
 
     # This si the player's role.
-    role: Optional[UserRole] = None
+    role: UserRole
 
     # This is the player's birth date.
     birth_date: Optional[date] = None
@@ -89,17 +86,16 @@ class PlayerRequest(BaseModel):
     # This is the player's profile picture.
     photo_url: Optional[str] = None
 
-    # Removed validator for now to avoid issues
-    # @field_validator(
-    #     "first_name",
-    #     "last_name",
-    #     "company",
-    #     "license_number",
-    #     "email",
-    # )
-    # @classmethod
-    # def validate_not_blank(cls, v):
-    #     return not_blank(v)
+    @field_validator(
+        "first_name",
+        "last_name",
+        "company",
+        "license_number",
+        "email",
+    )
+    @classmethod
+    def validate_not_blank(cls, v):
+        return not_blank(v)
 
     model_config = ConfigDict(
         from_attributes=True

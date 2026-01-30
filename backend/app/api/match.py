@@ -1,11 +1,11 @@
 from datetime import date, time, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, or_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import and_, func, or_
+from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
-from app.models.models import Event, Match, Player, Team, User
+from app.models.models import Event, Match, Player, Team
 from app.schemas.match import MatchRequest, MatchResponse, MatchStatus, MatchesListResponse
 
 router = APIRouter()
@@ -24,15 +24,7 @@ def list_matches(upcoming : bool | None = Query(None), team_id : int | None = Qu
     param : user - The client.
     return : Return all the matchs.
     """
-    matches = db.query(Match).options(
-        joinedload(Match.event),
-        joinedload(Match.team1).joinedload(Team.player1),
-        joinedload(Match.team1).joinedload(Team.player2),
-        joinedload(Match.team1).joinedload(Team.pool),
-        joinedload(Match.team2).joinedload(Team.player1),
-        joinedload(Match.team2).joinedload(Team.player2),
-        joinedload(Match.team2).joinedload(Team.pool)
-    )
+    matches = db.query(Match)
 
     if upcoming:
         today = date.today()
@@ -65,7 +57,7 @@ def list_matches(upcoming : bool | None = Query(None), team_id : int | None = Qu
 
 
 @router.get("/{match_id}", response_model=MatchResponse)
-def get_match(match_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def get_match(match_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_user)):
     """
     This function gets a specific match.
 
@@ -82,7 +74,7 @@ def get_match(match_id: int, db: Session = Depends(get_db), _: User = Depends(ge
 
 
 @router.post("", response_model=MatchResponse, status_code=status.HTTP_201_CREATED)
-def create_match(data: MatchRequest, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
+def create_match(data: MatchRequest, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
     """
     This function creates a match.
 
@@ -104,7 +96,12 @@ def create_match(data: MatchRequest, db: Session = Depends(get_db), _: User = De
             db.rollback()
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Team not found")
         
-        event = Event(event_date=func.current_date(), event_time=time())
+        event : Event = None
+        if data.event is None:
+            event = Event(event_date=func.current_date(), event_time=time())
+        else:
+            event = Event(event_date=data.event.event_date, event_time=data.event.event_time)
+        
         db.add(event)
 
         match = Match(
@@ -127,7 +124,7 @@ def create_match(data: MatchRequest, db: Session = Depends(get_db), _: User = De
 
 
 @router.put("/{match_id}", response_model=MatchResponse)
-def update_match(match_id: int, data: MatchRequest, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
+def update_match(match_id: int, data: MatchRequest, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
     """
     This function updates a match.
     
@@ -163,6 +160,19 @@ def update_match(match_id: int, data: MatchRequest, db: Session = Depends(get_db
         match.team1=team1
         match.team2=team2
 
+        if data.event is not None:
+            event = db.query(Event).filter(and_(Event.event_date == data.event.event_date, Event.event_time == data.event.event_time)).first()
+            if event is not None:
+                match.event = event
+            else:
+                if len(match.event.matches) == 1:
+                    match.event.event_date = data.event.event_date
+                    match.event.event_time = data.event.event_time
+                else:
+                    event = Event(event_date=data.event.event_date, event_time=data.event.event_time)
+                    db.add(event)
+                    match.event = event
+
         db.commit()
     except:
         db.rollback()
@@ -172,7 +182,7 @@ def update_match(match_id: int, data: MatchRequest, db: Session = Depends(get_db
 
 
 @router.delete("/{match_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_match(match_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
+def delete_match(match_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
     """
     This function remove a match.
 

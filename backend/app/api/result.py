@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_, func
+from sqlalchemy.orm import Session
+from sqlalchemy import and_, or_, func
 
 from app.database import get_db
 from app.api.deps import get_current_user
@@ -11,7 +11,7 @@ from app.schemas.ranking import RankingsResponse, RankingItemResponse
 router = APIRouter()
 
 
-@router.get("/my-results")
+@router.get("/my-results", response_model=MyResultsResponse)
 def my_results(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     """
     This function returns the results of the connected user.
@@ -20,38 +20,24 @@ def my_results(db: Session = Depends(get_db), current_user=Depends(get_current_u
     param : current_user - The client.
     return : Return the results and statistics.
     """
-    print("DEBUG: my_results called")  # DEBUG
-    
+
     player = current_user.player
-    print(f"DEBUG: player = {player}")  # DEBUG
     if not player:
-        return MyResultsResponse(
-            results=[],
-            statistics=StatisticsResponse(
-                total_matches=0,
-                wins=0,
-                losses=0,
-                win_rate=0.0
-            )
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Player not found"
         )
-    
-    # Récupérer tous les matchs où le joueur participe
-    all_matches = db.query(Match).options(
-        joinedload(Match.team1).joinedload(Team.player1),
-        joinedload(Match.team1).joinedload(Team.player2),
-        joinedload(Match.team2).joinedload(Team.player1),
-        joinedload(Match.team2).joinedload(Team.player2),
-        joinedload(Match.event)
+
+    matches = db.query(Match).filter(
+        and_(or_(
+                Match.team1.has(player1_id=player.id),
+                Match.team1.has(player2_id=player.id),
+                Match.team2.has(player1_id=player.id),
+                Match.team2.has(player2_id=player.id),
+            ),
+            Match.status == "TERMINE"
+        )
     ).all()
-    
-    # Filtrer les matchs où le joueur est présent
-    matches = []
-    for match in all_matches:
-        if (match.team1.player1_id == player.id or 
-            match.team1.player2_id == player.id or
-            match.team2.player1_id == player.id or 
-            match.team2.player2_id == player.id):
-            matches.append(match)
 
     results = []
     wins = 0

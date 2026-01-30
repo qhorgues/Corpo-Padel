@@ -9,20 +9,8 @@ from app.schemas.profile import ProfilePhoto, ProfileResponse, ProfilePlayer, Pr
 router = APIRouter()
 
 
-@router.get("/test")
-def test_route():
-    """Test endpoint to verify router works"""
-    return {"message": "Profile router works"}
-
-
-@router.get("/test-auth")
-def test_auth(current_user = Depends(get_current_user)):
-    """Test endpoint with auth"""
-    return {"message": "Auth works", "user_id": current_user.id}
-
-
-@router.get("/me")
-def get_profile(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+@router.get("/me", response_model=ProfileResponse)
+def get_profile(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     This function gets the current user's profile.
 
@@ -38,27 +26,15 @@ def get_profile(db: Session = Depends(get_db), current_user = Depends(get_curren
             detail="Player not found",
         )
 
-    return {
-        "user": {
-            "id": current_user.id,
-            "email": current_user.email,
-            "role": current_user.role
-        },
-        "player": {
-            "id": player.id,
-            "first_name": player.first_name,
-            "last_name": player.last_name,
-            "company": player.company,
-            "license_number": player.license_number,
-            "birth_date": player.birth_date,
-            "photo_url": player.photo_url
-        }
-    }
+    return ProfileResponse(
+        user=ProfileUser.model_validate(current_user),
+        player=ProfilePlayer.model_validate(player)
+    )
 
 
 
-@router.put("/me")
-def update_profile(data: ProfilePlayerRequest, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+@router.put("/me", response_model=ProfileResponse)
+def update_profile(data: ProfilePlayerRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     This function updates the current user's profile.
 
@@ -77,43 +53,37 @@ def update_profile(data: ProfilePlayerRequest, db: Session = Depends(get_db), cu
 
     if data.first_name is not None:
         player.first_name = data.first_name
+    
     if data.last_name is not None:
         player.last_name = data.last_name
+    
     if data.company is not None:
         player.company = data.company
+
     if data.license_number is not None:
         player.license_number = data.license_number
+
     if data.birth_date is not None:
         player.birth_date = data.birth_date
+
     if data.photo_url is not None:
         player.photo_url = data.photo_url
+
     if data.email is not None:
-        current_user.email = data.email
+        player.user.email = data.email
 
     db.commit()
     db.refresh(player)
 
-    return {
-        "user": {
-            "id": current_user.id,
-            "email": current_user.email,
-            "role": current_user.role
-        },
-        "player": {
-            "id": player.id,
-            "first_name": player.first_name,
-            "last_name": player.last_name,
-            "company": player.company,
-            "license_number": player.license_number,
-            "birth_date": player.birth_date,
-            "photo_url": player.photo_url
-        }
-    }
+    return ProfileResponse(
+        user=ProfileUser.model_validate(current_user),
+        player=ProfilePlayer.model_validate(player)
+    )
 
 
 
 @router.put("/me/photo", status_code=status.HTTP_201_CREATED)
-def upload_profile_photo(data: ProfilePhoto, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def upload_profile_photo(data: ProfilePhoto, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     This function stores the profile photo URI.
 
@@ -139,7 +109,7 @@ def upload_profile_photo(data: ProfilePhoto, db: Session = Depends(get_db), curr
 
 
 @router.delete("/me/photo", status_code=status.HTTP_204_NO_CONTENT)
-def delete_profile_photo(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def delete_profile_photo(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     This function deletes the profile photo URI.
 
@@ -159,4 +129,3 @@ def delete_profile_photo(db: Session = Depends(get_db), current_user = Depends(g
     db.commit()
 
     return
-

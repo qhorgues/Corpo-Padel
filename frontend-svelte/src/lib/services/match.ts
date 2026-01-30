@@ -77,6 +77,14 @@ export interface MatchInput {
   status: string;
 
   /**
+   * Event information.
+   */
+  event?: {
+    event_date: string;
+    event_time: string;
+  } | null;
+
+  /**
    * The first team id.
    */
   team1_id: number;

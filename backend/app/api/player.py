@@ -1,16 +1,17 @@
 # app/api/players.py
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
-from app.models.models import Player, User as UserModel, User
+from app.models.models import Player, Team, User
 from app.schemas.player import PlayerRequest, PlayerResponse, PlayersListResponse
 
 router = APIRouter()
 
 
 @router.get("", response_model=PlayersListResponse)
-def list_players(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def list_players(db: Session = Depends(get_db), _: str = Depends(get_current_user)):
     """
     This function gets all the players.
 
@@ -20,30 +21,15 @@ def list_players(db: Session = Depends(get_db), _: User = Depends(get_current_us
     """
     players = db.query(Player).all()
 
-    # Construire manuellement les réponses pour inclure l'email
-    players_with_email = []
-    for player in players:
-        user = db.query(UserModel).filter(UserModel.id == player.user_id).first()
-        players_with_email.append({
-            "id": player.id,
-            "first_name": player.first_name,
-            "last_name": player.last_name,
-            "company": player.company,
-            "license_number": player.license_number,
-            "email": user.email if user else None,
-            "birth_date": player.birth_date,
-            "photo_url": player.photo_url
-        })
-
-    return {
-        "players": players_with_email,
-        "total": len(players_with_email)
-    }
+    return PlayersListResponse(
+        players=players,
+        total=len(players),
+    )
 
 
 
 @router.get("/{player_id}", response_model=PlayerResponse)
-def get_player(player_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def get_player(player_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_user)):
     """
     This function gets a specific player.
 
@@ -64,8 +50,8 @@ def get_player(player_id: int, db: Session = Depends(get_db), _: User = Depends(
 
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
-def create_player(data: PlayerRequest, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
+@router.post("", response_model=PlayerResponse, status_code=status.HTTP_201_CREATED)
+def create_player(data: PlayerRequest, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
     """
     This function creates a player.
 
@@ -99,33 +85,17 @@ def create_player(data: PlayerRequest, db: Session = Depends(get_db), _: User = 
                     )
         db.add(player)
         db.commit()
-    except Exception as e:
+    except:
         db.rollback()
-        print(f"ERROR in create_player: {type(e).__name__}: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Error: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid field")
     db.refresh(player)
 
-    return {
-        "id": player.id,
-        "first_name": player.first_name,
-        "last_name": player.last_name,
-        "company": player.company,
-        "license_number": player.license_number,
-        "birth_date": player.birth_date,
-        "photo_url": player.photo_url,
-        "user": {
-            "id": player.user.id,
-            "email": player.user.email,
-            "role": player.user.role
-        }
-    }
+    return PlayerResponse.model_validate(player)
 
 
 
-@router.put("/{player_id}")
-def update_player(player_id: int, data: PlayerRequest, db: Session = Depends(get_db),_: User = Depends(get_current_admin)):
+@router.put("/{player_id}", response_model=PlayerResponse)
+def update_player(player_id: int, data: PlayerRequest, db: Session = Depends(get_db),_: str = Depends(get_current_admin)):
     """
     This function updates a player.
     
@@ -147,50 +117,28 @@ def update_player(player_id: int, data: PlayerRequest, db: Session = Depends(get
 
     try:
         user = player.user
-        if data.email is not None:
-            user.email = data.email
-        if data.password is not None:
-            user.password_hash = get_password_hash(data.password)
-        if data.role is not None:
-            user.role = data.role
+        user.email = data.email
+        user.password_hash = get_password_hash(data.password)
+        user.role = data.role
         
-        if data.first_name is not None:
-            player.first_name = data.first_name
-        if data.last_name is not None:
-            player.last_name = data.last_name
-        if data.company is not None:
-            player.company = data.company
-        if data.license_number is not None:
-            player.license_number = data.license_number
-        if data.birth_date is not None:
-            player.birth_date = data.birth_date
-        if data.photo_url is not None:
-            player.photo_url = data.photo_url
+        player.first_name = data.first_name
+        player.last_name = data.last_name
+        player.company = data.company
+        player.license_number = data.license_number
+        player.birth_date = data.birth_date
+        player.photo_url = data.photo_url
 
         db.commit()
     except:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid field")
 
-    return {
-        "id": player.id,
-        "first_name": player.first_name,
-        "last_name": player.last_name,
-        "company": player.company,
-        "license_number": player.license_number,
-        "birth_date": player.birth_date,
-        "photo_url": player.photo_url,
-        "user": {
-            "id": player.user.id,
-            "email": player.user.email,
-            "role": player.user.role
-        }
-    }
+    return PlayerResponse.model_validate(player)
 
 
 
 @router.delete("/{player_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_player(player_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
+def delete_player(player_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
     """
     This function remove a player.
 
@@ -206,6 +154,10 @@ def delete_player(player_id: int, db: Session = Depends(get_db), _: User = Depen
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Player not found",
         )
+    
+    team = db.query(Team).filter(or_(Team.player1 == player, Team.player2 == player)).first()
+    if team is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="The player is in a team")
 
     db.delete(player.user)
     db.delete(player)

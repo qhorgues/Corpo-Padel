@@ -3,14 +3,22 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.api.deps import get_current_user, get_current_admin
-from app.models.models import Match, Pool, Team, User
+from app.models.models import Match, Pool, Team
 from app.schemas.pool import PoolRequest, PoolResponse, PoolsListResponse
 
 router = APIRouter()
 
+def pool_to_response(pool: Pool) -> PoolResponse:
+    return PoolResponse(
+        id=pool.id,
+        name=pool.name,
+        teams_count=len(pool.teams),
+        teams=[team.company for team in pool.teams],
+    )
+
 
 @router.get("", response_model=PoolsListResponse)
-def list_pools(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def list_pools(db: Session = Depends(get_db), _: str = Depends(get_current_user)):
     """
     This function gets all the pools.
 
@@ -19,21 +27,12 @@ def list_pools(db: Session = Depends(get_db), _: User = Depends(get_current_user
     return : Return all the pools.
     """
     pools = db.query(Pool).all()
-    pools_response = [
-        PoolResponse(
-            id=pool.id,
-            name=pool.name,
-            teams_count=len(pool.teams),
-            teams=[team.company for team in pool.teams]
-        )
-        for pool in pools
-    ]
-    return PoolsListResponse(pools=pools_response, total=len(pools))
+    return PoolsListResponse(pools=[pool_to_response(pool) for pool in pools], total=len(pools))
 
 
 
 @router.get("/{pool_id}", response_model=PoolResponse)
-def get_pool(pool_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def get_pool(pool_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_user)):
     """
     This function gets a specific pool.
 
@@ -45,12 +44,12 @@ def get_pool(pool_id: int, db: Session = Depends(get_db), _: User = Depends(get_
     pool = db.get(Pool, pool_id)
     if not pool:
         raise HTTPException(status_code=404, detail="Pool not found")
-    return PoolResponse.model_validate(pool)
+    return pool_to_response(pool)
 
 
 
 @router.post("", response_model=PoolResponse, status_code=status.HTTP_201_CREATED)
-def create_pool(data: PoolRequest, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
+def create_pool(data: PoolRequest, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
     """
     This function creates a pool.
 
@@ -84,7 +83,7 @@ def create_pool(data: PoolRequest, db: Session = Depends(get_db), _: User = Depe
 
 
 @router.put("/{pool_id}", response_model=PoolResponse)
-def update_pool(pool_id: int, data: PoolRequest, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
+def update_pool(pool_id: int, data: PoolRequest, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
     """
     This function updates a pool.
     
@@ -130,7 +129,7 @@ def update_pool(pool_id: int, data: PoolRequest, db: Session = Depends(get_db), 
 
 
 @router.delete("/{pool_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_pool(pool_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_admin)):
+def delete_pool(pool_id: int, db: Session = Depends(get_db), _: str = Depends(get_current_admin)):
     """
     This function remove a pool.
 

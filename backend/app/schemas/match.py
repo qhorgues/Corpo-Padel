@@ -60,10 +60,10 @@ class MatchResponse(BaseModel):
     status: MatchStatus
 
     # This is the score of the first team.
-    score_team1: Optional[int] = None
+    score_team1: Optional[str] = None
 
     # This is the score of the second team.
-    score_team2: Optional[int] = None
+    score_team2: Optional[str] = None
 
     model_config = ConfigDict(
         from_attributes=True
@@ -81,6 +81,9 @@ class MatchRequest(BaseModel):
 
     # The match's status.
     status: MatchStatus
+
+    # This is the event of the match.
+    event: EventMini | None = None
 
     # The first team id in the match.
     team1_id: int
