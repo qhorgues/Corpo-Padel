@@ -79,10 +79,24 @@ FICHIER : src/routes/planning/+page.svelte
     let currentEvent: Event | null = null;
     let eventToDelete: Event | null = null;
 
-    // Obtenir la date et l'heure actuelles
-    const today = new Date().toISOString().split('T')[0];
-    const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    // Obtenir la date et l'heure actuelles en fuseau horaire français
+    function getLocalDate(): string {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function getLocalTime(): string {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+
+    const today = getLocalDate();
+    const currentTime = getLocalTime();
 
     // Formulaire
     let eventForm: EventForm = {
@@ -302,9 +316,8 @@ FICHIER : src/routes/planning/+page.svelte
     function openAddModal(): void {
         editMode = false;
         currentEvent = null;
-        const today = new Date().toISOString().split('T')[0];
-        const now = new Date();
-        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const today = getLocalDate();
+        const currentTime = getLocalTime();
         eventForm = {
             date: today,
             time: currentTime,
@@ -359,7 +372,7 @@ FICHIER : src/routes/planning/+page.svelte
     // Valider le formulaire
     function validateEventForm(): string | null {
         // Date >= aujourd'hui
-        const today = new Date().toISOString().split("T")[0];
+        const today = getLocalDate();
         if (eventForm.date < today) {
             return "La date doit être aujourd'hui ou dans le futur.";
         }

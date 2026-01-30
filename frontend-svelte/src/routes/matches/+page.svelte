@@ -65,10 +65,24 @@ FICHIER : src/routes/matches/+page.svelte
     let editMode: boolean = false;
     let currentMatch: Match | null = null;
 
-    // Obtenir la date et l'heure actuelles
-    const today = new Date().toISOString().split('T')[0];
-    const now = new Date();
-    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    // Obtenir la date et l'heure actuelles en fuseau horaire français
+    function getLocalDate(): string {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function getLocalTime(): string {
+        const now = new Date();
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${hours}:${minutes}`;
+    }
+
+    const today = getLocalDate();
+    const currentTime = getLocalTime();
 
     // Formulaire
     let formData: FormData = {
@@ -285,9 +299,8 @@ FICHIER : src/routes/matches/+page.svelte
     function openAddModal(): void {
         editMode = false;
         currentMatch = null;
-        const today = new Date().toISOString().split('T')[0];
-        const now = new Date();
-        const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        const today = getLocalDate();
+        const currentTime = getLocalTime();
         formData = {
             date: today,
             time: currentTime,
@@ -338,7 +351,7 @@ FICHIER : src/routes/matches/+page.svelte
     // Sauvegarder un match
     async function saveMatch() {
         // Validation de la date (>= aujourd'hui)
-        const today = new Date().toISOString().split("T")[0];
+        const today = getLocalDate();
         if (formData.date < today) {
             alert("La date doit être aujourd'hui ou dans le futur.");
             return;
@@ -746,13 +759,13 @@ FICHIER : src/routes/matches/+page.svelte
                             <option value="A_VENIR">À venir</option>
                             <option 
                                 value="TERMINE" 
-                                disabled={formData.date > new Date().toISOString().split('T')[0]}
+                                disabled={formData.date > getLocalDate()}
                             >
-                                Terminé {formData.date > new Date().toISOString().split('T')[0] ? '(date future)' : ''}
+                                Terminé {formData.date > getLocalDate() ? '(date future)' : ''}
                             </option>
                             <option value="ANNULE">Annulé</option>
                         </select>
-                        {#if formData.date > new Date().toISOString().split('T')[0]}
+                        {#if formData.date > getLocalDate()}
                             <p class="text-xs text-orange-600 mt-1">
                                 ⚠️ Un match ne peut être marqué comme terminé que si sa date est passée
                             </p>

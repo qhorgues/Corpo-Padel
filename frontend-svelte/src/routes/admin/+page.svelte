@@ -7,10 +7,33 @@ FICHIER : src/routes/HomePage.svelte
     import { playersService, type PlayerOutput, type PlayerInput, Role } from "$lib/services/player";
     import { onMount } from "svelte";
     
+    // Types
+    type UserForm = {
+        id?: number;
+        first_name: string;
+        last_name: string;
+        company: string;
+        license_number: string;
+        email: string;
+    };
+
+    type ValidationField = {
+        valid: boolean;
+        error: string;
+    };
+
+    type ValidationState = {
+        first_name: ValidationField;
+        last_name: ValidationField;
+        company: ValidationField;
+        license_number: ValidationField;
+        email: ValidationField;
+    };
+    
     let showModal = false;
-    let currentUser = null;
+    let currentUser: UserForm | null = null;
     let isEditMode = false;
-    let players = [];
+    let players: PlayerOutput[] = [];
     let loading = true;
     
     // Gestion des entreprises
@@ -43,7 +66,7 @@ FICHIER : src/routes/HomePage.svelte
     }
     
     // Validation states
-    let validation = {
+    let validation: ValidationState = {
         first_name: { valid: false, error: "" },
         last_name: { valid: false, error: "" },
         company: { valid: false, error: "" },
@@ -52,7 +75,7 @@ FICHIER : src/routes/HomePage.svelte
     };
     
     // Regex patterns
-    const patterns = {
+    const patterns: Record<keyof ValidationState, RegExp> = {
         first_name: /^[a-zA-ZÀ-ÿ\s]{2,50}$/,
         last_name: /^[a-zA-ZÀ-ÿ\s]{2,50}$/,
         company: /^.{2,100}$/,
@@ -60,7 +83,7 @@ FICHIER : src/routes/HomePage.svelte
         email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     };
     
-    function validateField(field, value) {
+    function validateField(field: keyof ValidationState, value: string) {
         if (!value || value.trim() === "") {
             validation[field] = { valid: false, error: "Ce champ est obligatoire" };
             return;
@@ -81,19 +104,22 @@ FICHIER : src/routes/HomePage.svelte
         }
     }
     
-    function handleInput(field, event) {
-        let value = event.target.value;
+    function handleInput(field: keyof ValidationState, event: Event) {
+        if (!currentUser) return;
+        
+        const target = event.target as HTMLInputElement | HTMLSelectElement;
+        let value = target.value;
         
         // Block input at max length
         if (field === "first_name" || field === "last_name") {
             if (value.length > 50) {
                 value = value.substring(0, 50);
-                event.target.value = value;
+                target.value = value;
             }
         } else if (field === "company") {
             if (value.length > 100) {
                 value = value.substring(0, 100);
-                event.target.value = value;
+                target.value = value;
             }
         }
         
@@ -120,14 +146,22 @@ FICHIER : src/routes/HomePage.svelte
         showModal = true;
     }
     
-    function openEditModal(joueur) {
+    function openEditModal(joueur: PlayerOutput) {
         isEditMode = true;
-        currentUser = { ...joueur };
+        currentUser = { 
+            id: joueur.id,
+            first_name: joueur.first_name,
+            last_name: joueur.last_name,
+            company: joueur.company,
+            license_number: joueur.license_number,
+            email: joueur.email || "" // S'assurer que email n'est jamais undefined
+        };
         
         // Validate all fields on edit
-        Object.keys(currentUser).forEach(field => {
-            if (patterns[field]) {
-                validateField(field, currentUser[field]);
+        const fieldsToValidate: (keyof ValidationState)[] = ['first_name', 'last_name', 'company', 'license_number', 'email'];
+        fieldsToValidate.forEach(field => {
+            if (currentUser && currentUser[field]) {
+                validateField(field, currentUser[field] as string);
             }
         });
         
@@ -140,6 +174,8 @@ FICHIER : src/routes/HomePage.svelte
     }
     
     async function saveUser() {
+        if (!currentUser) return;
+        
         // Check all fields are valid
         const allValid = Object.values(validation).every(v => v.valid);
         if (!allValid) {
@@ -158,7 +194,7 @@ FICHIER : src/routes/HomePage.svelte
                 role: Role.JOUEUR
             };
 
-            if (isEditMode) {
+            if (isEditMode && currentUser.id) {
                 await playersService.updatePlayer(currentUser.id, playerInput);
             } else {
                 await playersService.createPlayer(playerInput);
@@ -211,6 +247,12 @@ FICHIER : src/routes/HomePage.svelte
             <div class="flex justify-between items-center p-6 bg-gray-50 border-b sticky top-0">
                 <h2 class="text-2xl font-bold text-gray-800">Liste des joueurs</h2>
                 <div class="flex gap-3">
+                    <a
+                        href="/admin/teams-pools"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                    >
+                        🏆 Équipes & Poules
+                    </a>
                     <button 
                         on:click={() => showCompanyModal = true}
                         class="px-6 py-2 bg-purple-600 text-white rounded-lg font-semibold hover:bg-purple-700 transition-colors"
@@ -274,7 +316,7 @@ FICHIER : src/routes/HomePage.svelte
     </div>
     
     <!-- Modal de création/modification -->
-    {#if showModal}
+    {#if showModal && currentUser}
     <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" on:click={closeModal}>
         <div class="bg-white rounded-lg shadow-xl p-8 max-w-2xl w-full mx-4" on:click|stopPropagation>
             <h3 class="text-2xl font-bold text-gray-800 mb-6">
