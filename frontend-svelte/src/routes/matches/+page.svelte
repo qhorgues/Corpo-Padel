@@ -266,6 +266,8 @@ FICHIER : src/routes/matches/+page.svelte
     function getStatusBadge(status: string): string {
         if (status === "A_VENIR") {
             return "bg-blue-100 text-blue-800";
+        } else if (status === "TERMINE") {
+            return "bg-green-100 text-green-800";
         } else if (status === "ANNULE") {
             return "bg-red-100 text-red-800";
         }
@@ -274,6 +276,7 @@ FICHIER : src/routes/matches/+page.svelte
 
     function getStatusLabel(status: string): string {
         if (status === "A_VENIR") return "À venir";
+        if (status === "TERMINE") return "Terminé";
         if (status === "ANNULE") return "Annulé";
         return status;
     }
@@ -338,6 +341,12 @@ FICHIER : src/routes/matches/+page.svelte
         const today = new Date().toISOString().split("T")[0];
         if (formData.date < today) {
             alert("La date doit être aujourd'hui ou dans le futur.");
+            return;
+        }
+
+        // Validation : ne pas mettre TERMINE si la date n'est pas passée
+        if (formData.status === "TERMINE" && formData.date > today) {
+            alert("Un match ne peut être marqué comme terminé que si sa date est passée.");
             return;
         }
 
@@ -487,6 +496,7 @@ FICHIER : src/routes/matches/+page.svelte
                         >
                             <option value="">Tous</option>
                             <option value="A_VENIR">À venir</option>
+                            <option value="TERMINE">Terminé</option>
                             <option value="ANNULE">Annulé</option>
                         </select>
                     </div>
@@ -653,8 +663,12 @@ FICHIER : src/routes/matches/+page.svelte
                         type="date"
                         bind:value={formData.date}
                         required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={editMode}
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {editMode ? 'bg-gray-100 cursor-not-allowed' : ''}"
                     />
+                    {#if editMode}
+                        <p class="text-xs text-gray-500 mt-1">La date ne peut pas être modifiée</p>
+                    {/if}
                 </div>
 
                 <div>
@@ -665,8 +679,12 @@ FICHIER : src/routes/matches/+page.svelte
                         type="time"
                         bind:value={formData.time}
                         required
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        disabled={editMode}
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent {editMode ? 'bg-gray-100 cursor-not-allowed' : ''}"
                     />
+                    {#if editMode}
+                        <p class="text-xs text-gray-500 mt-1">L'heure ne peut pas être modifiée</p>
+                    {/if}
                 </div>
 
                 <div>
@@ -726,8 +744,19 @@ FICHIER : src/routes/matches/+page.svelte
                             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
                             <option value="A_VENIR">À venir</option>
+                            <option 
+                                value="TERMINE" 
+                                disabled={formData.date > new Date().toISOString().split('T')[0]}
+                            >
+                                Terminé {formData.date > new Date().toISOString().split('T')[0] ? '(date future)' : ''}
+                            </option>
                             <option value="ANNULE">Annulé</option>
                         </select>
+                        {#if formData.date > new Date().toISOString().split('T')[0]}
+                            <p class="text-xs text-orange-600 mt-1">
+                                ⚠️ Un match ne peut être marqué comme terminé que si sa date est passée
+                            </p>
+                        {/if}
                     </div>
                 {/if}
 
