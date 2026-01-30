@@ -58,6 +58,7 @@ FICHIER : src/routes/planning/+page.svelte
 
     // Données
     let events: Event[] = [];
+    let filteredEvents: Event[] = [];
     let userTeams: number[] = [];
     let teams: TeamOption[] = [];
     let loading = true;
@@ -69,7 +70,7 @@ FICHIER : src/routes/planning/+page.svelte
     let selectedDate: string | null = null;
 
     // Filtres
-    let showOnlyUserEvents = false; // Par défaut décoché car userTeams n'est pas encore implémenté
+    let showOnlyUserEvents = true; // Activé par défaut
 
     // Modales
     let showEventModal = false;
@@ -163,7 +164,7 @@ FICHIER : src/routes/planning/+page.svelte
                                 {
                                     player_id: team2.player1.id,
                                     first_name: team2.player1.first_name,
-                                    last_name: team2.player1.last_name
+                                    last_name: team2.player2.last_name
                                 },
                                 {
                                     player_id: team2.player2.id,
@@ -192,16 +193,31 @@ FICHIER : src/routes/planning/+page.svelte
     }
 
     // Filtrer les événements
-    $: filteredEvents = events.filter((event) => {
-        if (!showOnlyUserEvents) return true;
+    $: {
+        console.log("=== DEBUG FILTRAGE ===");
+        console.log("showOnlyUserEvents:", showOnlyUserEvents);
+        console.log("userTeams:", userTeams);
+        console.log("Total events:", events.length);
+        
+        filteredEvents = events.filter((event: Event) => {
+            if (!showOnlyUserEvents) {
+                console.log("Filtre désactivé, on affiche tout");
+                return true;
+            }
 
-        // Vérifier si l'utilisateur participe à au moins un match de l'événement
-        return event.matches.some(
-            (match) =>
-                userTeams.includes(match.team1.team_id) ||
-                userTeams.includes(match.team2.team_id),
-        );
-    });
+            // Vérifier si l'utilisateur participe à au moins un match de l'événement
+            const isUserEvent = event.matches.some(
+                (match) =>
+                    userTeams.includes(match.team1.team_id) ||
+                    userTeams.includes(match.team2.team_id),
+            );
+            console.log(`Event ${event.event_id}: isUserEvent = ${isUserEvent}`);
+            return isUserEvent;
+        });
+        
+        console.log("Filtered events:", filteredEvents.length);
+        console.log("===================");
+    }
 
     // Obtenir les événements d'une date spécifique
     function getEventsForDate(dateStr: string): Event[] {
@@ -231,6 +247,10 @@ FICHIER : src/routes/planning/+page.svelte
     }
 
     $: calendarDays = generateCalendar(currentYear, currentMonth);
+    
+    // Forcer la réactivité du calendrier quand les événements filtrés changent
+    $: calendarKey = `${currentYear}-${currentMonth}-${filteredEvents.length}-${showOnlyUserEvents}`;
+
 
     // Navigation du calendrier
     function previousMonth(): void {
@@ -437,9 +457,9 @@ FICHIER : src/routes/planning/+page.svelte
                 await eventsService.createEvent(eventInput);
             }
 
-            // Recharger les données
-            await loadData();
+            // Fermer la modale et recharger les données
             showAddEditModal = false;
+            await loadData();
         } catch (error) {
             console.error("Erreur lors de la sauvegarde:", error);
             alert("Erreur lors de la sauvegarde de l'événement");
@@ -467,9 +487,9 @@ FICHIER : src/routes/planning/+page.svelte
         if (eventToDelete) {
             try {
                 await eventsService.deleteEvent(eventToDelete.event_id);
-                await loadData();
                 showDeleteModal = false;
                 eventToDelete = null;
+                await loadData();
             } catch (error) {
                 console.error("Erreur lors de la suppression:", error);
                 alert("Erreur lors de la suppression de l'événement");
@@ -565,41 +585,43 @@ FICHIER : src/routes/planning/+page.svelte
             </div>
 
             <!-- Grille du calendrier -->
-            <div class="grid grid-cols-7 gap-2">
-                {#each calendarDays as day}
-                    {#if day.getTime() === 0}
-                        <!-- Case vide -->
-                        <div class="aspect-square"></div>
-                    {:else}
-                        {@const dayHasEvents = hasEvents(day)}
-                        {@const isToday = day.getDate() === new Date().getDate() &&
-                            day.getMonth() === new Date().getMonth() &&
-                            day.getFullYear() === new Date().getFullYear()}
-                        
-                        <button
-                            on:click={() => handleDayClick(day)}
-                            class="aspect-square border rounded-lg p-2 transition-all duration-200 
-                                {dayHasEvents
-                                    ? 'bg-blue-50 border-blue-400 hover:bg-blue-100 hover:border-blue-500 cursor-pointer shadow-sm'
-                                    : 'border-gray-200 hover:bg-gray-50 cursor-default'}
-                                {isToday ? 'ring-2 ring-blue-600 ring-offset-1' : ''}"
-                        >
-                            <div class="text-sm {dayHasEvents ? 'font-bold text-blue-700' : 'text-gray-700'}">
-                                {day.getDate()}
-                            </div>
-                            {#if dayHasEvents}
-                                <div class="mt-1 flex items-center justify-center">
-                                    <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
+            {#key calendarKey}
+                <div class="grid grid-cols-7 gap-2">
+                    {#each calendarDays as day}
+                        {#if day.getTime() === 0}
+                            <!-- Case vide -->
+                            <div class="aspect-square"></div>
+                        {:else}
+                            {@const dayHasEvents = hasEvents(day)}
+                            {@const isToday = day.getDate() === new Date().getDate() &&
+                                day.getMonth() === new Date().getMonth() &&
+                                day.getFullYear() === new Date().getFullYear()}
+                            
+                            <button
+                                on:click={() => handleDayClick(day)}
+                                class="aspect-square border rounded-lg p-2 transition-all duration-200 
+                                    {dayHasEvents
+                                        ? 'bg-blue-50 border-blue-400 hover:bg-blue-100 hover:border-blue-500 cursor-pointer shadow-sm'
+                                        : 'border-gray-200 hover:bg-gray-50 cursor-default'}
+                                    {isToday ? 'ring-2 ring-blue-600 ring-offset-1' : ''}"
+                            >
+                                <div class="text-sm {dayHasEvents ? 'font-bold text-blue-700' : 'text-gray-700'}">
+                                    {day.getDate()}
                                 </div>
-                                <div class="text-xs text-blue-600 mt-1 font-medium">
-                                    {getEventsForDate(formatDate(day)).length}
-                                    event{getEventsForDate(formatDate(day)).length > 1 ? "s" : ""}
-                                </div>
-                            {/if}
-                        </button>
-                    {/if}
-                {/each}
-            </div>
+                                {#if dayHasEvents}
+                                    <div class="mt-1 flex items-center justify-center">
+                                        <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
+                                    </div>
+                                    <div class="text-xs text-blue-600 mt-1 font-medium">
+                                        {getEventsForDate(formatDate(day)).length}
+                                        event{getEventsForDate(formatDate(day)).length > 1 ? "s" : ""}
+                                    </div>
+                                {/if}
+                            </button>
+                        {/if}
+                    {/each}
+                </div>
+            {/key}
         </div>
     </div>
 </div>
