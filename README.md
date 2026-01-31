@@ -37,7 +37,7 @@ backend/
 └── README.md
 ```
 
-### Frontend (VueJS)
+### Frontend (Svelte)
 ```
 frontend/
 ├── src/
