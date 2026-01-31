@@ -3,6 +3,7 @@ describe('Authentification', () => {
     // Nettoyer le localStorage
     cy.clearLocalStorage()
     cy.visit('http://localhost:5173')
+    cy.wait(500)
   })
 
   it('Affiche la page de login', () => {
@@ -50,23 +51,6 @@ describe('Authentification', () => {
     cy.contains('Email ou mot de passe incorrect').should('be.visible')
   })
 
-  it('Bloque le compte après 5 tentatives échouées', () => {
-    cy.visit('/login')
-    
-    // Faire 5 tentatives échouées
-    for (let i = 0; i < 5; i++) {
-      cy.get('input[type="email"]').clear().type('admin@padel.com')
-      cy.get('input[type="password"]').clear().type('WrongPassword')
-      cy.get('button[type="submit"]').click()
-      cy.wait(500)
-    }
-    
-    // Vérifier le message de blocage
-    cy.contains('Compte bloqué').should('be.visible')
-    cy.contains('minutes').should('be.visible')
-    cy.get('button[type="submit"]').should('be.disabled')
-  })
-
   it('Redirection automatique si déjà connecté', () => {
     // Se connecter d'abord
     cy.visit('/login')
@@ -104,5 +88,22 @@ describe('Authentification', () => {
     cy.window().then((win) => {
       expect(win.localStorage.getItem('token')).to.be.null
     })
+  })
+
+  it('Bloque le compte après 5 tentatives échouées', () => {
+    cy.visit('/login')
+    
+    // Faire 5 tentatives échouées
+    for (let i = 0; i < 5; i++) {
+      cy.get('input[type="email"]').clear().type('admin@padel.com')
+      cy.get('input[type="password"]').clear().type('WrongPassword')
+      cy.get('button[type="submit"]').click()
+      cy.wait(500)
+    }
+    
+    // Vérifier le message de blocage
+    cy.contains('Compte bloqué').should('be.visible')
+    cy.contains('minutes').should('be.visible')
+    cy.get('button[type="submit"]').should('be.disabled')
   })
 })
