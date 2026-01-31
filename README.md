@@ -83,9 +83,9 @@ uvicorn app.main:app --reload
 ### Frontend
 ```bash
 cd frontend-svelte
-npm install
+bun install
 cp .env.example .env
-npm run dev
+bun run dev
 ```
 
 ## 🔐 Compte de test
