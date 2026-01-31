@@ -5,7 +5,7 @@ Application de gestion de tournois corporatifs de padel.
 ## 📦 Contenu
 
 - **Backend** : FastAPI avec authentification JWT
-- **Frontend** : VueJS 3 avec Vue Router et Pinia
+- **Frontend** : Svelte
 - **Base de données** : SQLite
 - **Tests** : Pytest (backend) + Cypress (frontend)
 
